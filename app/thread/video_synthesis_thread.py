@@ -42,11 +42,11 @@ class VideoSynthesisThread(QThread):
             self.progress.emit(5, self.tr("正在合成"))
 
             if not video_file:
-                raise ValueError(self.tr("视频路径为空"))
+                raise ValueError(self.tr("視頻路徑為空"))
             if not subtitle_file:
-                raise ValueError(self.tr("字幕路径为空"))
+                raise ValueError(self.tr("字幕路徑為空"))
             if not output_path:
-                raise ValueError(self.tr("输出路径为空"))
+                raise ValueError(self.tr("輸出路徑為空"))
 
             video_quality = config.video_quality
             crf = video_quality.get_crf()
@@ -103,7 +103,7 @@ class VideoSynthesisThread(QThread):
         except Exception as e:
             logger.exception(f"视频合成失败: {e}")
             self.error.emit(str(e))
-            self.progress.emit(100, self.tr("视频合成失败"))
+            self.progress.emit(100, self.tr("視頻合成失敗"))
 
     def progress_callback(self, value, message):
         progress = int(5 + int(value) / 100 * 95)

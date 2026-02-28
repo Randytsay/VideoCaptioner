@@ -7,6 +7,7 @@ from app.core.translate.bing_translator import BingTranslator
 from app.core.translate.deeplx_translator import DeepLXTranslator
 from app.core.translate.google_translator import GoogleTranslator
 from app.core.translate.llm_translator import LLMTranslator
+from app.core.translate.opencc_translator import OpenCCTranslator
 from app.core.translate.types import TargetLanguage, TranslatorType
 from app.core.utils.logger import setup_logger
 
@@ -67,6 +68,15 @@ class TranslatorFactory:
                     batch_num=batch_num,
                     target_language=target_language,
                     timeout=20,
+                    update_callback=update_callback,
+                )
+            elif translator_type == TranslatorType.OPENCC:
+                batch_num = 50
+                return OpenCCTranslator(
+                    thread_num=thread_num,
+                    batch_num=batch_num,
+                    target_language=target_language,
+                    timeout=10,
                     update_callback=update_callback,
                 )
         except Exception as e:

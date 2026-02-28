@@ -100,7 +100,7 @@ class VideoInfoCard(CardWidget):
         self.info_layout.setContentsMargins(3, 8, 3, 8)
         self.info_layout.setSpacing(10)
 
-        self.video_title = BodyLabel(self.tr("请拖入音频或视频文件"), self)
+        self.video_title = BodyLabel(self.tr("請拖入音頻或視頻文件"), self)
         self.video_title.setFont(QFont("Microsoft YaHei", 14, QFont.Bold))
         self.video_title.setWordWrap(True)
         self.info_layout.addWidget(self.video_title, alignment=Qt.AlignTop)  # type: ignore
@@ -108,10 +108,10 @@ class VideoInfoCard(CardWidget):
         self.details_layout = QHBoxLayout()
         self.details_layout.setSpacing(15)
 
-        self.resolution_info = self.create_pill_button(self.tr("画质"), 110)
+        self.resolution_info = self.create_pill_button(self.tr("畫質"), 110)
         self.file_size_info = self.create_pill_button(self.tr("文件大小"), 110)
-        self.duration_info = self.create_pill_button(self.tr("时长"), 100)
-        self.audio_track_button = self.create_pill_button(self.tr("音轨"), 100)
+        self.duration_info = self.create_pill_button(self.tr("時長"), 100)
+        self.audio_track_button = self.create_pill_button(self.tr("音軌"), 100)
         self.audio_track_button.hide()  # 默认隐藏，只在多音轨时显示
 
         self.progress_ring = ProgressRing(self)
@@ -138,8 +138,8 @@ class VideoInfoCard(CardWidget):
 
     def setup_button_layout(self) -> None:
         self.button_layout = QVBoxLayout()
-        self.open_folder_button = PushButton(self.tr("打开文件夹"), self)
-        self.start_button = PrimaryPushButton(self.tr("开始转录"), self)
+        self.open_folder_button = PushButton(self.tr("打開文件夾"), self)
+        self.start_button = PrimaryPushButton(self.tr("開始轉錄"), self)
         self.button_layout.addWidget(self.open_folder_button)
         self.button_layout.addWidget(self.start_button)
 
@@ -157,12 +157,12 @@ class VideoInfoCard(CardWidget):
 
         self.video_title.setText(video_info.file_name.rsplit(".", 1)[0])
         self.resolution_info.setText(
-            self.tr("画质: ") + f"{video_info.width}x{video_info.height}"
+            self.tr("畫質: ") + f"{video_info.width}x{video_info.height}"
         )
         file_size_mb = os.path.getsize(video_info.file_path) / 1024 / 1024
         self.file_size_info.setText(self.tr("大小: ") + f"{file_size_mb:.1f} MB")
         duration = datetime.timedelta(seconds=int(video_info.duration_seconds))
-        self.duration_info.setText(self.tr("时长: ") + f"{duration}")
+        self.duration_info.setText(self.tr("時長: ") + f"{duration}")
 
         # 更新音轨选择按钮
         self.update_audio_tracks(video_info)
@@ -188,7 +188,7 @@ class VideoInfoCard(CardWidget):
                 lang = stream.language
 
                 # 构建菜单项文本（使用序号 i+1）
-                text = self.tr("音轨") + str(i + 1)
+                text = self.tr("音軌") + str(i + 1)
                 if lang:
                     text += f" ({lang})"
 
@@ -225,7 +225,7 @@ class VideoInfoCard(CardWidget):
         if array_index < len(audio_streams):
             stream = audio_streams[array_index]
             lang = stream.language
-            text = f"{self.tr('音轨')} {array_index + 1}"
+            text = f"{self.tr('音軌')} {array_index + 1}"
             if lang:
                 text += f" ({lang})"
             self.audio_track_button.setText(text)
@@ -276,7 +276,7 @@ class VideoInfoCard(CardWidget):
         else:
             InfoBar.warning(
                 self.tr("警告"),
-                self.tr("没有可用的字幕文件夹"),
+                self.tr("沒有可用的字幕文件夾"),
                 duration=INFOBAR_DURATION_WARNING,
                 parent=self,
             )
@@ -310,10 +310,10 @@ class VideoInfoCard(CardWidget):
         """处理转录错误"""
         self.transcription_interface.is_processing = False  # type: ignore
         self.start_button.setEnabled(True)
-        self.start_button.setText(self.tr("重新转录"))
+        self.start_button.setText(self.tr("重新轉錄"))
         self.progress_ring.hide()
         InfoBar.error(
-            self.tr("转录失败"),
+            self.tr("轉錄失敗"),
             self.tr(error),
             duration=INFOBAR_DURATION_ERROR,
             parent=self.parent().parent(),
@@ -322,14 +322,14 @@ class VideoInfoCard(CardWidget):
     def on_transcript_finished(self, task):
         """转录完成处理"""
         self.start_button.setEnabled(True)
-        self.start_button.setText(self.tr("转录完成"))
+        self.start_button.setText(self.tr("轉錄完成"))
         self.progress_ring.hide()
         self.finished.emit(task)
 
     def reset_ui(self):
         """重置UI状态"""
         self.start_button.setDisabled(False)
-        self.start_button.setText(self.tr("开始转录"))
+        self.start_button.setText(self.tr("開始轉錄"))
         self.progress_ring.setValue(0)
         self.progress_ring.hide()
 
@@ -382,7 +382,7 @@ class TranscriptionInterface(QWidget):
         self.command_bar.setFixedHeight(40)
 
         # 添加打开文件按钮
-        self.open_file_action = Action(FluentIcon.FOLDER, self.tr("打开文件"))
+        self.open_file_action = Action(FluentIcon.FOLDER, self.tr("打開文件"))
         self.open_file_action.triggered.connect(self._on_file_select)
         self.command_bar.addAction(self.open_file_action)
 
@@ -390,7 +390,7 @@ class TranscriptionInterface(QWidget):
 
         # 添加转录模型选择按钮
         self.model_button = TransparentDropDownPushButton(
-            self.tr("转录模型"), self, FluentIcon.MICROPHONE
+            self.tr("轉錄模型"), self, FluentIcon.MICROPHONE
         )
         self.model_button.setFixedHeight(34)
         self.model_button.setMinimumWidth(180)
@@ -471,8 +471,8 @@ class TranscriptionInterface(QWidget):
             self.finished.emit(task.output_path, task.file_path)
 
             InfoBar.success(
-                self.tr("转录完成"),
-                self.tr("开始字幕优化..."),
+                self.tr("轉錄完成"),
+                self.tr("開始字幕優化..."),
                 duration=INFOBAR_DURATION_SUCCESS,
                 position=InfoBarPosition.BOTTOM,
                 parent=self.parent(),
@@ -485,10 +485,10 @@ class TranscriptionInterface(QWidget):
 
         video_formats = " ".join(f"*.{fmt.value}" for fmt in SupportedVideoFormats)
         audio_formats = " ".join(f"*.{fmt.value}" for fmt in SupportedAudioFormats)
-        filter_str = f"{self.tr('媒体文件')} ({video_formats} {audio_formats});;{self.tr('视频文件')} ({video_formats});;{self.tr('音频文件')} ({audio_formats})"
+        filter_str = f"{self.tr('媒體文件')} ({video_formats} {audio_formats});;{self.tr('視頻文件')} ({video_formats});;{self.tr('音頻文件')} ({audio_formats})"
 
         file_path, _ = file_dialog.getOpenFileName(
-            self, self.tr("选择媒体文件"), desktop_path, filter_str
+            self, self.tr("選擇媒體文件"), desktop_path, filter_str
         )
         if file_path:
             self.update_info(file_path)
@@ -504,7 +504,7 @@ class TranscriptionInterface(QWidget):
         """处理视频信息提取错误"""
         self.is_processing = False
         InfoBar.error(
-            self.tr("错误"),
+            self.tr("錯誤"),
             self.tr(error_msg),
             duration=INFOBAR_DURATION_ERROR,
             parent=self,
@@ -530,7 +530,7 @@ class TranscriptionInterface(QWidget):
         if self.is_processing:
             InfoBar.warning(
                 self.tr("警告"),
-                self.tr("正在处理中，请等待当前任务完成"),
+                self.tr("正在處理中，請等待當前任務完成"),
                 duration=INFOBAR_DURATION_WARNING,
                 parent=self,
             )
@@ -552,16 +552,16 @@ class TranscriptionInterface(QWidget):
             if is_supported:
                 self.update_info(file_path)
                 InfoBar.success(
-                    self.tr("导入成功"),
-                    self.tr("开始语音转文字"),
+                    self.tr("導入成功"),
+                    self.tr("開始語音轉文字"),
                     duration=INFOBAR_DURATION_SUCCESS,
                     parent=self,
                 )
                 break
             else:
                 InfoBar.error(
-                    self.tr("格式错误") + file_ext,
-                    self.tr("请拖入音频或视频文件"),
+                    self.tr("格式錯誤") + file_ext,
+                    self.tr("請拖入音頻或視頻文件"),
                     duration=INFOBAR_DURATION_ERROR,
                     parent=self,
                 )

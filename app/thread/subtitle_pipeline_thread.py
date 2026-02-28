@@ -47,7 +47,7 @@ class SubtitlePipelineThread(QThread):
             logger.info(f"\n{self.task.subtitle_config.print_config()}")
             if self.task.synthesis_config:
                 logger.info(f"\n{self.task.synthesis_config.print_config()}")
-            self.progress.emit(0, self.tr("开始转录"))
+            self.progress.emit(0, self.tr("開始轉錄"))
 
             # 创建转录任务
             transcribe_task = TranscribeTask(
@@ -71,7 +71,7 @@ class SubtitlePipelineThread(QThread):
 
             # 2. 字幕优化/翻译
             # self.task.status = Task.Status.OPTIMIZING
-            self.progress.emit(40, self.tr("开始优化字幕"))
+            self.progress.emit(40, self.tr("開始優化字幕"))
 
             # 创建字幕任务
             subtitle_task = SubtitleTask(
@@ -97,7 +97,7 @@ class SubtitlePipelineThread(QThread):
 
             # 3. 视频合成
             # self.task.status = Task.Status.GENERATING
-            self.progress.emit(80, self.tr("开始合成视频"))
+            self.progress.emit(80, self.tr("開始合成視頻"))
 
             # 创建合成任务
             synthesis_task = SynthesisTask(
@@ -122,7 +122,7 @@ class SubtitlePipelineThread(QThread):
 
             # self.task.status = FullProcessTask.Status.COMPLETED  # type: ignore
             logger.info("处理完成")
-            self.progress.emit(100, self.tr("处理完成"))
+            self.progress.emit(100, self.tr("處理完成"))
             self.finished.emit(self.task)
 
         except Exception as e:

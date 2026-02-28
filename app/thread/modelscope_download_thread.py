@@ -63,7 +63,7 @@ class ModelscopeDownloadThread(QThread):
 
     def run(self):
         try:
-            self.progress.emit(0, self.tr("开始下载..."))
+            self.progress.emit(0, self.tr("開始下載..."))
 
             callback_class = create_progress_callback_class(self.progress.emit)
 
@@ -74,7 +74,7 @@ class ModelscopeDownloadThread(QThread):
                     progress_callbacks=[callback_class],
                 )
 
-            self.progress.emit(100, self.tr("下载完成"))
+            self.progress.emit(100, self.tr("下載完成"))
 
         except Exception as e:
             self.error.emit(str(e))

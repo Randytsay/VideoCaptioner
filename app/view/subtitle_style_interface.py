@@ -127,7 +127,7 @@ class SubtitleStyleInterface(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setObjectName("SubtitleStyleInterface")
-        self.setWindowTitle(self.tr("字幕样式配置"))
+        self.setWindowTitle(self.tr("字幕樣式配置"))
         self.setAcceptDrops(True)  # 启用拖放功能
 
         # 创建主布局
@@ -163,19 +163,19 @@ class SubtitleStyleInterface(QWidget):
 
         # ASS 样式设置组
         self.assPrimaryGroup = SettingCardGroup(
-            self.tr("主字幕样式"), self.settingsWidget
+            self.tr("主字幕樣式"), self.settingsWidget
         )
         self.assSecondaryGroup = SettingCardGroup(
-            self.tr("副字幕样式"), self.settingsWidget
+            self.tr("副字幕樣式"), self.settingsWidget
         )
 
         # 圆角背景设置组
         self.roundedBgGroup = SettingCardGroup(
-            self.tr("圆角背景样式"), self.settingsWidget
+            self.tr("圓角背景樣式"), self.settingsWidget
         )
 
         # 预览设置组
-        self.previewGroup = SettingCardGroup(self.tr("预览设置"), self.settingsWidget)
+        self.previewGroup = SettingCardGroup(self.tr("預覽設置"), self.settingsWidget)
 
     def _initPreviewArea(self):
         """初始化右侧预览区域"""
@@ -188,7 +188,7 @@ class SubtitleStyleInterface(QWidget):
         self.previewTopWidget.setFixedHeight(430)
         self.previewTopLayout = QVBoxLayout(self.previewTopWidget)
 
-        self.previewLabel = BodyLabel(self.tr("预览效果"))
+        self.previewLabel = BodyLabel(self.tr("預覽效果"))
         self.previewImage = ImageLabel()
         self.previewImage.setAlignment(Qt.AlignCenter)  # type: ignore
         self.previewTopLayout.addWidget(self.previewImage, 0, Qt.AlignCenter)  # type: ignore
@@ -200,23 +200,23 @@ class SubtitleStyleInterface(QWidget):
 
         self.styleNameComboBox = ComboBoxSettingCard(
             FIF.VIEW,  # type: ignore
-            self.tr("选择样式"),
-            self.tr("选择已保存的字幕样式"),
+            self.tr("選擇樣式"),
+            self.tr("選擇已保存的字幕樣式"),
             texts=[],  # type: ignore
         )
 
         self.newStyleButton = PushSettingCard(
-            self.tr("新建样式"),
+            self.tr("新建樣式"),
             FIF.ADD,
-            self.tr("新建样式"),
-            self.tr("基于当前样式新建预设"),
+            self.tr("新建樣式"),
+            self.tr("基於當前樣式新建預設"),
         )
 
         self.openStyleFolderButton = PushSettingCard(
-            self.tr("打开样式文件夹"),
+            self.tr("打開樣式文件夾"),
             FIF.FOLDER,
-            self.tr("打开样式文件夹"),
-            self.tr("在文件管理器中打开样式文件夹"),
+            self.tr("打開樣式文件夾"),
+            self.tr("在文件管理器中打開樣式文件夾"),
         )
 
         self.previewBottomLayout.addWidget(self.styleNameComboBox)
@@ -233,7 +233,7 @@ class SubtitleStyleInterface(QWidget):
         self.renderModeCard = ComboBoxSettingCard(
             FIF.BRUSH,  # type: ignore
             self.tr("渲染模式"),
-            self.tr("选择字幕渲染方式"),
+            self.tr("選擇字幕渲染方式"),
             texts=[e.value for e in SubtitleRenderModeEnum],
         )
 
@@ -241,15 +241,15 @@ class SubtitleStyleInterface(QWidget):
         self.layoutCard = ComboBoxSettingCard(
             FIF.ALIGNMENT,  # type: ignore
             self.tr("字幕排布"),
-            self.tr("设置主字幕和副字幕的显示方式"),
+            self.tr("設置主字幕和副字幕的顯示方式"),
             texts=["译文在上", "原文在上", "仅译文", "仅原文"],
         )
 
         # ASS 模式 - 垂直间距
         self.assVerticalSpacingCard = SpinBoxSettingCard(
             FIF.ALIGNMENT,  # type: ignore
-            self.tr("垂直间距"),
-            self.tr("设置字幕的垂直间距"),
+            self.tr("垂直間距"),
+            self.tr("設置字幕的垂直間距"),
             minimum=8,
             maximum=10000,
         )
@@ -257,22 +257,22 @@ class SubtitleStyleInterface(QWidget):
         # ASS 模式 - 主字幕样式
         self.assPrimaryFontCard = ComboBoxSettingCard(
             FIF.FONT,  # type: ignore
-            self.tr("主字幕字体"),
-            self.tr("设置主字幕的字体"),
+            self.tr("主字幕字體"),
+            self.tr("設置主字幕的字體"),
         )
 
         self.assPrimarySizeCard = SpinBoxSettingCard(
             FIF.FONT_SIZE,  # type: ignore
-            self.tr("主字幕字号"),
-            self.tr("设置主字幕的大小"),
+            self.tr("主字幕字號"),
+            self.tr("設置主字幕的大小"),
             minimum=8,
             maximum=1000,
         )
 
         self.assPrimarySpacingCard = DoubleSpinBoxSettingCard(
             FIF.ALIGNMENT,  # type: ignore
-            self.tr("主字幕间距"),
-            self.tr("设置主字幕的字符间距"),
+            self.tr("主字幕間距"),
+            self.tr("設置主字幕的字符間距"),
             minimum=0.0,
             maximum=10.0,
             decimals=1,
@@ -281,21 +281,21 @@ class SubtitleStyleInterface(QWidget):
         self.assPrimaryColorCard = ColorSettingCard(
             QColor(255, 255, 255),
             FIF.PALETTE,  # type: ignore
-            self.tr("主字幕颜色"),
-            self.tr("设置主字幕的颜色"),
+            self.tr("主字幕顏色"),
+            self.tr("設置主字幕的顏色"),
         )
 
         self.assPrimaryOutlineColorCard = ColorSettingCard(
             QColor(0, 0, 0),
             FIF.PALETTE,  # type: ignore
-            self.tr("主字幕边框颜色"),
-            self.tr("设置主字幕的边框颜色"),
+            self.tr("主字幕邊框顏色"),
+            self.tr("設置主字幕的邊框顏色"),
         )
 
         self.assPrimaryOutlineSizeCard = DoubleSpinBoxSettingCard(
             FIF.ZOOM,  # type: ignore
-            self.tr("主字幕边框大小"),
-            self.tr("设置主字幕的边框粗细"),
+            self.tr("主字幕邊框大小"),
+            self.tr("設置主字幕的邊框粗細"),
             minimum=0.0,
             maximum=10.0,
             decimals=1,
@@ -304,22 +304,22 @@ class SubtitleStyleInterface(QWidget):
         # ASS 模式 - 副字幕样式
         self.assSecondaryFontCard = ComboBoxSettingCard(
             FIF.FONT,  # type: ignore
-            self.tr("副字幕字体"),
-            self.tr("设置副字幕的字体"),
+            self.tr("副字幕字體"),
+            self.tr("設置副字幕的字體"),
         )
 
         self.assSecondarySizeCard = SpinBoxSettingCard(
             FIF.FONT_SIZE,  # type: ignore
-            self.tr("副字幕字号"),
-            self.tr("设置副字幕的大小"),
+            self.tr("副字幕字號"),
+            self.tr("設置副字幕的大小"),
             minimum=8,
             maximum=1000,
         )
 
         self.assSecondarySpacingCard = DoubleSpinBoxSettingCard(
             FIF.ALIGNMENT,  # type: ignore
-            self.tr("副字幕间距"),
-            self.tr("设置副字幕的字符间距"),
+            self.tr("副字幕間距"),
+            self.tr("設置副字幕的字符間距"),
             minimum=0.0,
             maximum=50.0,
             decimals=1,
@@ -328,21 +328,21 @@ class SubtitleStyleInterface(QWidget):
         self.assSecondaryColorCard = ColorSettingCard(
             QColor(255, 255, 255),
             FIF.PALETTE,  # type: ignore
-            self.tr("副字幕颜色"),
-            self.tr("设置副字幕的颜色"),
+            self.tr("副字幕顏色"),
+            self.tr("設置副字幕的顏色"),
         )
 
         self.assSecondaryOutlineColorCard = ColorSettingCard(
             QColor(0, 0, 0),
             FIF.PALETTE,  # type: ignore
-            self.tr("副字幕边框颜色"),
-            self.tr("设置副字幕的边框颜色"),
+            self.tr("副字幕邊框顏色"),
+            self.tr("設置副字幕的邊框顏色"),
         )
 
         self.assSecondaryOutlineSizeCard = DoubleSpinBoxSettingCard(
             FIF.ZOOM,  # type: ignore
-            self.tr("副字幕边框大小"),
-            self.tr("设置副字幕的边框粗细"),
+            self.tr("副字幕邊框大小"),
+            self.tr("設置副字幕的邊框粗細"),
             minimum=0.0,
             maximum=50.0,
             decimals=1,
@@ -351,14 +351,14 @@ class SubtitleStyleInterface(QWidget):
         # 圆角背景样式设置
         self.roundedFontCard = ComboBoxSettingCard(
             FIF.FONT,  # type: ignore
-            self.tr("字体"),
-            self.tr("设置字幕字体"),
+            self.tr("字體"),
+            self.tr("設置字幕字體"),
         )
 
         self.roundedFontSizeCard = SpinBoxSettingCard(
             FIF.FONT_SIZE,  # type: ignore
-            self.tr("字体大小"),
-            self.tr("设置字幕字体大小"),
+            self.tr("字體大小"),
+            self.tr("設置字幕字體大小"),
             minimum=16,
             maximum=120,
         )
@@ -366,62 +366,62 @@ class SubtitleStyleInterface(QWidget):
         self.roundedTextColorCard = ColorSettingCard(
             QColor(255, 255, 255),
             FIF.PALETTE,  # type: ignore
-            self.tr("文字颜色"),
-            self.tr("设置字幕文字颜色"),
+            self.tr("文字顏色"),
+            self.tr("設置字幕文字顏色"),
         )
 
         self.roundedBgColorCard = ColorSettingCard(
             QColor(25, 25, 25, 200),
             FIF.PALETTE,  # type: ignore
-            self.tr("背景颜色"),
-            self.tr("设置圆角矩形背景颜色"),
+            self.tr("背景顏色"),
+            self.tr("設置圓角矩形背景顏色"),
             enableAlpha=True,
         )
 
         self.roundedCornerRadiusCard = SpinBoxSettingCard(
             FIF.ZOOM,  # type: ignore
-            self.tr("圆角半径"),
-            self.tr("设置背景圆角大小"),
+            self.tr("圓角半徑"),
+            self.tr("設置背景圓角大小"),
             minimum=0,
             maximum=50,
         )
 
         self.roundedPaddingHCard = SpinBoxSettingCard(
             FIF.ALIGNMENT,  # type: ignore
-            self.tr("水平内边距"),
-            self.tr("文字与背景边缘的水平距离"),
+            self.tr("水平內邊距"),
+            self.tr("文字與背景邊緣的水平距離"),
             minimum=4,
             maximum=100,
         )
 
         self.roundedPaddingVCard = SpinBoxSettingCard(
             FIF.ALIGNMENT,  # type: ignore
-            self.tr("垂直内边距"),
-            self.tr("文字与背景边缘的垂直距离"),
+            self.tr("垂直內邊距"),
+            self.tr("文字與背景邊緣的垂直距離"),
             minimum=4,
             maximum=50,
         )
 
         self.roundedMarginBottomCard = SpinBoxSettingCard(
             FIF.ALIGNMENT,  # type: ignore
-            self.tr("底部边距"),
-            self.tr("字幕距视频底部的距离"),
+            self.tr("底部邊距"),
+            self.tr("字幕距視頻底部的距離"),
             minimum=20,
             maximum=300,
         )
 
         self.roundedLineSpacingCard = SpinBoxSettingCard(
             FIF.ALIGNMENT,  # type: ignore
-            self.tr("行间距"),
-            self.tr("双语字幕的行间距"),
+            self.tr("行間距"),
+            self.tr("雙語字幕的行間距"),
             minimum=0,
             maximum=50,
         )
 
         self.roundedLetterSpacingCard = SpinBoxSettingCard(
             FIF.FONT,  # type: ignore
-            self.tr("字符间距"),
-            self.tr("每个字符之间的额外间距"),
+            self.tr("字符間距"),
+            self.tr("每個字符之間的額外間距"),
             minimum=0,
             maximum=20,
             step=1,
@@ -430,25 +430,25 @@ class SubtitleStyleInterface(QWidget):
         # 预览设置
         self.previewTextCard = ComboBoxSettingCard(
             FIF.MESSAGE,  # type: ignore
-            self.tr("预览文字"),
-            self.tr("设置预览显示的文字内容"),
+            self.tr("預覽文字"),
+            self.tr("設置預覽顯示的文字內容"),
             texts=list(PERVIEW_TEXTS.keys()),
             parent=self.previewGroup,
         )
 
         self.orientationCard = ComboBoxSettingCard(
             FIF.LAYOUT,  # type: ignore
-            self.tr("预览方向"),
-            self.tr("设置预览图片的显示方向"),
+            self.tr("預覽方向"),
+            self.tr("設置預覽圖片的顯示方向"),
             texts=["横屏", "竖屏"],
             parent=self.previewGroup,
         )
 
         self.previewImageCard = PushSettingCard(
-            self.tr("选择图片"),
+            self.tr("選擇圖片"),
             FIF.PHOTO,
-            self.tr("预览背景"),
-            self.tr("选择预览使用的背景图片"),
+            self.tr("預覽背景"),
+            self.tr("選擇預覽使用的背景圖片"),
             parent=self.previewGroup,
         )
 
@@ -851,9 +851,9 @@ class SubtitleStyleInterface(QWidget):
         """选择预览背景图片"""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            self.tr("选择背景图片"),
+            self.tr("選擇背景圖片"),
             "",
-            self.tr("图片文件") + " (*.png *.jpg *.jpeg)",
+            self.tr("圖片文件") + " (*.png *.jpg *.jpeg)",
         )
         if file_path:
             cfg.set(cfg.subtitle_preview_image, file_path)
@@ -1009,7 +1009,7 @@ class SubtitleStyleInterface(QWidget):
 
         InfoBar.success(
             title=self.tr("成功"),
-            content=self.tr("已加载样式 ") + style_name,
+            content=self.tr("已加載樣式 ") + style_name,
             orient=Qt.Horizontal,  # type: ignore
             isClosable=True,
             position=InfoBarPosition.TOP,
@@ -1124,7 +1124,7 @@ class SubtitleStyleInterface(QWidget):
             if (SUBTITLE_STYLE_PATH / f"{style_name}{ext}").exists():
                 InfoBar.warning(
                     title=self.tr("警告"),
-                    content=self.tr("样式 ") + style_name + self.tr(" 已存在"),
+                    content=self.tr("樣式 ") + style_name + self.tr(" 已存在"),
                     orient=Qt.Horizontal,  # type: ignore
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -1142,7 +1142,7 @@ class SubtitleStyleInterface(QWidget):
 
             InfoBar.success(
                 title=self.tr("成功"),
-                content=self.tr("已创建新样式 ") + style_name,
+                content=self.tr("已創建新樣式 ") + style_name,
                 orient=Qt.Horizontal,  # type: ignore
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -1213,7 +1213,7 @@ class SubtitleStyleInterface(QWidget):
                 # 显示成功提示
                 InfoBar.success(
                     title=self.tr("成功"),
-                    content=self.tr("已设置预览背景：") + Path(file_path).name,
+                    content=self.tr("已設置預覽背景：") + Path(file_path).name,
                     orient=Qt.Horizontal,  # type: ignore
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -1228,10 +1228,10 @@ class StyleNameDialog(MessageBoxBase):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.titleLabel = BodyLabel(self.tr("新建样式"), self)
+        self.titleLabel = BodyLabel(self.tr("新建樣式"), self)
         self.nameLineEdit = LineEdit(self)
 
-        self.nameLineEdit.setPlaceholderText(self.tr("输入样式名称"))
+        self.nameLineEdit.setPlaceholderText(self.tr("輸入樣式名稱"))
         self.nameLineEdit.setClearButtonEnabled(True)
 
         # 添加控件到布局
@@ -1239,7 +1239,7 @@ class StyleNameDialog(MessageBoxBase):
         self.viewLayout.addWidget(self.nameLineEdit)
 
         # 设置按钮文本
-        self.yesButton.setText(self.tr("确定"))
+        self.yesButton.setText(self.tr("確定"))
         self.cancelButton.setText(self.tr("取消"))
 
         self.widget.setMinimumWidth(350)

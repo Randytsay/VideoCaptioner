@@ -108,7 +108,7 @@ class FasterWhisperASR(BaseASR):
         elif self.device == "cuda":
             if not shutil.which("faster-whisper-xxl"):
                 raise EnvironmentError(
-                    "faster-whisper-xxl 程序未找到，请确保已经下载。"
+                    self.tr("faster-whisper-xxl 程序未找到。\n請確保已在「語音轉錄」頁面的設定中下載程式，或手動將 resource/bin/faster-whisper-gpu.7z 解壓縮到該目錄下的 Faster-Whisper-XXL 資料夾中。")
                 )
             self.faster_whisper_program = "faster-whisper-xxl"
 

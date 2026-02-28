@@ -140,13 +140,13 @@ class SubtitleTableModel(QAbstractTableModel):
         if role == Qt.DisplayRole:  # type: ignore
             if orientation == Qt.Horizontal:  # type: ignore
                 return [
-                    self.tr("开始时间"),
-                    self.tr("结束时间"),
-                    self.tr("字幕内容"),
+                    self.tr("開始時間"),
+                    self.tr("結束時間"),
+                    self.tr("字幕內容"),
                     (
-                        self.tr("翻译字幕")
+                        self.tr("翻譯字幕")
                         if cfg.need_translate.value
-                        else self.tr("优化字幕")
+                        else self.tr("優化字幕")
                     ),
                 ][section]
             elif orientation == Qt.Vertical:  # type: ignore
@@ -285,7 +285,7 @@ class SubtitleInterface(QWidget):
         # 添加字幕翻译按钮
         self.translate_button = Action(
             FIF.LANGUAGE,
-            self.tr("字幕翻译"),
+            self.tr("字幕翻譯"),
             triggered=self.on_subtitle_translation_changed,
             checkable=True,
         )
@@ -293,7 +293,7 @@ class SubtitleInterface(QWidget):
 
         # 添加翻译语言选择
         self.target_language_button = TransparentDropDownPushButton(
-            self.tr("翻译语言"), self, FIF.LANGUAGE
+            self.tr("翻譯語言"), self, FIF.LANGUAGE
         )
         self.target_language_button.setFixedHeight(34)
         self.target_language_button.setMinimumWidth(125)
@@ -340,7 +340,7 @@ class SubtitleInterface(QWidget):
         )
 
         # 添加开始按钮到水平布局
-        self.start_button = PrimaryPushButton(self.tr("开始"), self, icon=FIF.PLAY)
+        self.start_button = PrimaryPushButton(self.tr("開始"), self, icon=FIF.PLAY)
         self.start_button.clicked.connect(
             lambda: self.start_subtitle_optimization(need_create_task=True)
         )
@@ -386,7 +386,7 @@ class SubtitleInterface(QWidget):
     def _setup_bottom_layout(self):
         self.bottom_layout = QHBoxLayout()
         self.progress_bar = ProgressBar(self)
-        self.status_label = BodyLabel(self.tr("请拖入字幕文件"), self)
+        self.status_label = BodyLabel(self.tr("請拖入字幕文件"), self)
         self.status_label.setMinimumWidth(100)
         self.status_label.setAlignment(Qt.AlignCenter)  # type: ignore
 
@@ -444,14 +444,14 @@ class SubtitleInterface(QWidget):
         asr_data = ASRData.from_subtitle_file(str(original_subtitle_save_path))
         self.model._data = asr_data.to_json()
         self.model.layoutChanged.emit()
-        self.status_label.setText(self.tr("已加载文件"))
+        self.status_label.setText(self.tr("已加載文件"))
 
     def start_subtitle_optimization(self, need_create_task: bool = True) -> None:
         # 检查是否有任务
         if not self.subtitle_path:
             InfoBar.warning(
                 self.tr("警告"),
-                self.tr("请先加载字幕文件"),
+                self.tr("請先加載字幕文件"),
                 duration=INFOBAR_DURATION_WARNING,
                 parent=self,
             )
@@ -481,8 +481,8 @@ class SubtitleInterface(QWidget):
         )
         self.subtitle_optimization_thread.start()
         InfoBar.info(
-            self.tr("开始优化"),
-            self.tr("开始优化字幕"),
+            self.tr("開始優化"),
+            self.tr("開始優化字幕"),
             duration=INFOBAR_DURATION_INFO,
             parent=self,
         )
@@ -501,8 +501,8 @@ class SubtitleInterface(QWidget):
         if self.task and self.task.need_next_task:
             self.finished.emit(video_path, output_path)
         InfoBar.success(
-            self.tr("优化完成"),
-            self.tr("优化完成字幕..."),
+            self.tr("優化完成"),
+            self.tr("優化完成字幕..."),
             duration=INFOBAR_DURATION_SUCCESS,
             position=InfoBarPosition.BOTTOM,
             parent=self.parent(),
@@ -513,7 +513,7 @@ class SubtitleInterface(QWidget):
         self.cancel_button.hide()  # 隐藏取消按钮
         self.progress_bar.error()
         InfoBar.error(
-            self.tr("优化失败"),
+            self.tr("優化失敗"),
             self.tr(error),
             duration=INFOBAR_DURATION_ERROR,
             parent=self,
@@ -547,7 +547,7 @@ class SubtitleInterface(QWidget):
         filter_str = f"{self.tr('字幕文件')} ({subtitle_formats})"
 
         file_path, _ = QFileDialog.getOpenFileName(
-            self, self.tr("选择字幕文件"), "", filter_str
+            self, self.tr("選擇字幕文件"), "", filter_str
         )
         if file_path:
             self.subtitle_path = file_path
@@ -558,7 +558,7 @@ class SubtitleInterface(QWidget):
         if not self.subtitle_path:
             InfoBar.warning(
                 self.tr("警告"),
-                self.tr("请先加载字幕文件"),
+                self.tr("請先加載字幕文件"),
                 duration=INFOBAR_DURATION_WARNING,
                 parent=self,
             )
@@ -593,8 +593,8 @@ class SubtitleInterface(QWidget):
             )
         except Exception as e:
             InfoBar.error(
-                self.tr("保存失败"),
-                self.tr("保存字幕文件失败: ") + str(e),
+                self.tr("保存失敗"),
+                self.tr("保存字幕文件失敗: ") + str(e),
                 duration=INFOBAR_DURATION_ERROR,
                 parent=self,
             )
@@ -604,7 +604,7 @@ class SubtitleInterface(QWidget):
         if not self.task:
             InfoBar.warning(
                 self.tr("警告"),
-                self.tr("请先加载字幕文件"),
+                self.tr("請先加載字幕文件"),
                 duration=INFOBAR_DURATION_WARNING,
                 parent=self,
             )
@@ -627,7 +627,7 @@ class SubtitleInterface(QWidget):
         asr_data = ASRData.from_subtitle_file(file_path)
         self.model._data = asr_data.to_json()
         self.model.layoutChanged.emit()
-        self.status_label.setText(self.tr("已加载文件"))
+        self.status_label.setText(self.tr("已加載文件"))
 
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         event.accept() if event.mimeData().hasUrls() else event.ignore()
@@ -647,8 +647,8 @@ class SubtitleInterface(QWidget):
             if is_supported:
                 self.load_subtitle_file(file_path)
                 InfoBar.success(
-                    self.tr("导入成功"),
-                    self.tr("成功导入") + os.path.basename(file_path),
+                    self.tr("導入成功"),
+                    self.tr("成功導入") + os.path.basename(file_path),
                     duration=INFOBAR_DURATION_SUCCESS,
                     position=InfoBarPosition.BOTTOM,
                     parent=self,
@@ -656,7 +656,7 @@ class SubtitleInterface(QWidget):
                 break
             else:
                 InfoBar.error(
-                    self.tr("格式错误") + file_ext,
+                    self.tr("格式錯誤") + file_ext,
                     self.tr("支持的字幕格式:") + str(supported_formats),
                     duration=INFOBAR_DURATION_ERROR,
                     parent=self,
@@ -740,8 +740,8 @@ class SubtitleInterface(QWidget):
             return
 
         # 添加菜单项
-        # retranslate_action = Action(FIF.SYNC, self.tr("重新翻译"))
-        merge_action = Action(FIF.LINK, self.tr("合并"))  # 添加快捷键提示
+        # retranslate_action = Action(FIF.SYNC, self.tr("重新翻譯"))
+        merge_action = Action(FIF.LINK, self.tr("合併"))  # 添加快捷键提示
         # menu.addAction(retranslate_action)
         menu.addAction(merge_action)
         merge_action.setShortcut("Ctrl+M")  # 设置快捷键
@@ -814,8 +814,8 @@ class SubtitleInterface(QWidget):
 
         # 显示成功提示
         InfoBar.success(
-            self.tr("合并成功"),
-            self.tr("已成功合并选中的字幕行"),
+            self.tr("合併成功"),
+            self.tr("已成功合併選中的字幕行"),
             duration=INFOBAR_DURATION_SUCCESS,
             parent=self,
         )
@@ -883,12 +883,17 @@ class PromptDialog(MessageBoxBase):
         self.setWindowTitle(self.tr("文稿提示"))
         # 连接按钮点击事件
         self.yesButton.clicked.connect(self.save_prompt)
+        self.import_button.clicked.connect(self.import_from_txt)
 
     def setup_ui(self) -> None:
         self.titleLabel = BodyLabel(self.tr("文稿提示"), self)
 
-        # 添加文本编辑框
+        # 添加文本編輯框
         self.text_edit = TextEdit(self)
+        
+        # 添加匯入按鈕
+        self.import_button = PushButton(self.tr("上傳 TXT"), self, FIF.UP)
+        
         self.text_edit.setPlaceholderText(
             self.tr(
                 "请输入文稿提示（辅助校正字幕和翻译）\n\n"
@@ -909,11 +914,12 @@ class PromptDialog(MessageBoxBase):
 
         # 添加到布局
         self.viewLayout.addWidget(self.titleLabel)
+        self.viewLayout.addWidget(self.import_button)
         self.viewLayout.addWidget(self.text_edit)
         self.viewLayout.setSpacing(10)
 
         # 设置按钮文本
-        self.yesButton.setText(self.tr("确定"))
+        self.yesButton.setText(self.tr("確定"))
         self.cancelButton.setText(self.tr("取消"))
 
     def get_prompt(self) -> str:
@@ -923,6 +929,51 @@ class PromptDialog(MessageBoxBase):
         # 在点击确定按钮时保存提示文本到配置
         prompt_text = self.text_edit.toPlainText()
         cfg.set(cfg.custom_prompt_text, prompt_text)
+
+    def import_from_txt(self) -> None:
+        """從 TXT 檔案匯入術語/提示詞"""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            self.tr("選擇術語表檔案"),
+            "",
+            self.tr("文本檔案 (*.txt);;所有檔案 (*.*)")
+        )
+        if file_path:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # 詢問是替換還是追加
+                from qfluentwidgets import MessageDialog
+                dialog = MessageDialog(
+                    self.tr("匯入術語表"),
+                    self.tr("您希望替換現有內容還是追加到末尾？"),
+                    self.window()
+                )
+                dialog.yesButton.setText(self.tr("替換"))
+                dialog.cancelButton.setText(self.tr("追加"))
+                
+                if dialog.exec_():
+                    self.text_edit.setText(content)
+                else:
+                    current_text = self.text_edit.toPlainText()
+                    if current_text and not current_text.endswith('\n'):
+                        current_text += '\n'
+                    self.text_edit.setText(current_text + content)
+                    
+                InfoBar.success(
+                    self.tr("匯入成功"),
+                    self.tr("已從檔案加載內容"),
+                    duration=2000,
+                    parent=self
+                )
+            except Exception as e:
+                InfoBar.error(
+                    self.tr("匯入失敗"),
+                    str(e),
+                    duration=3000,
+                    parent=self
+                )
 
 
 if __name__ == "__main__":

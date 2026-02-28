@@ -65,10 +65,10 @@ class MainWindow(FluentWindow):
     def initNavigation(self):
         """初始化导航栏"""
         # 添加导航项
-        self.addSubInterface(self.homeInterface, FIF.HOME, self.tr("主页"))
-        self.addSubInterface(self.batchProcessInterface, FIF.VIDEO, self.tr("批量处理"))
-        self.addSubInterface(self.subtitleStyleInterface, FIF.FONT, self.tr("字幕样式"))
-        self.addSubInterface(self.llmLogsInterface, FIF.HISTORY, self.tr("请求日志"))
+        self.addSubInterface(self.homeInterface, FIF.HOME, self.tr("主頁"))
+        self.addSubInterface(self.batchProcessInterface, FIF.VIDEO, self.tr("批量處理"))
+        self.addSubInterface(self.subtitleStyleInterface, FIF.FONT, self.tr("字幕樣式"))
+        self.addSubInterface(self.llmLogsInterface, FIF.HISTORY, self.tr("請求日誌"))
 
         self.navigationInterface.addSeparator()
 
@@ -124,11 +124,11 @@ class MainWindow(FluentWindow):
         w = MessageBox(
             self.tr("GitHub信息"),
             self.tr(
-                "VideoCaptioner 由本人在课余时间独立开发完成，目前托管在GitHub上，欢迎Star和Fork。项目诚然还有很多地方需要完善，遇到软件的问题或者BUG欢迎提交Issue。\n\n https://github.com/WEIFENG2333/VideoCaptioner"
+                "VideoCaptioner 由本人在課餘時間獨立開發完成，目前託管在GitHub上，歡迎Star和Fork。項目誠然還有很多地方需要完善，遇到軟件的問題或者BUG歡迎提交Issue。\n\n https://github.com/WEIFENG2333/VideoCaptioner"
             ),
             self,
         )
-        w.yesButton.setText(self.tr("打开 GitHub"))
+        w.yesButton.setText(self.tr("打開 GitHub"))
         w.cancelButton.setText(self.tr("支持作者"))
         if w.exec():
             QDesktopServices.openUrl(QUrl(GITHUB_REPO_URL))
@@ -158,7 +158,7 @@ class MainWindow(FluentWindow):
             self.batchProcessInterface.setEnabled(False)
             InfoBar.error(
                 title="需要更新",
-                content=self.tr("当前版本部分功能已被禁用。请尽快更新。"),
+                content=self.tr("當前版本部分功能已被禁用。請儘快更新。"),
                 isClosable=False,
                 position=InfoBarPosition.BOTTOM,
                 duration=-1,
@@ -202,8 +202,8 @@ class MainWindow(FluentWindow):
         """检查 FFmpeg 是否已安装"""
         if shutil.which("ffmpeg") is None:
             InfoBar.warning(
-                self.tr("FFmpeg 未安装"),
-                self.tr("软件处理音视频文件时需要 FFmpeg，请先安装"),
+                self.tr("FFmpeg 未安裝"),
+                self.tr("軟件處理音視頻文件時需要 FFmpeg，請先安裝"),
                 duration=INFOBAR_DURATION_FOREVER,
                 position=InfoBarPosition.BOTTOM,
                 parent=self,

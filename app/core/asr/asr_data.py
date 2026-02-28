@@ -207,6 +207,26 @@ class ASRData:
         self.segments = new_segments
         return self
 
+    def convert_to_traditional(self) -> "ASRData":
+        """使用 OpenCC 將所有片段文字轉換為繁體中文。"""
+        try:
+            import opencc
+            # 使用台灣正體與慣用語 (s2twp)
+            converter = opencc.OpenCC("s2twp.json")
+            for seg in self.segments:
+                seg.text = converter.convert(seg.text)
+                if seg.translated_text:
+                    seg.translated_text = converter.convert(seg.translated_text)
+        except ImportError:
+            from app.core.utils.logger import setup_logger
+            logger = setup_logger("asr_data")
+            logger.warning("未安裝 opencc-python-reimplemented，跳過繁體化")
+        except Exception as e:
+            from app.core.utils.logger import setup_logger
+            logger = setup_logger("asr_data")
+            logger.error(f"OpenCC 繁體轉換失敗: {str(e)}")
+        return self
+
     def remove_punctuation(self) -> "ASRData":
         """Remove trailing Chinese punctuation (comma, period) from segments."""
         punctuation = r"[，。]"

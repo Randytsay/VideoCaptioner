@@ -20,12 +20,12 @@ class DonateDialog(MessageBoxBase):
 
     def setup_ui(self):
         # 创建标题标签
-        self.titleLabel = BodyLabel(self.tr("感谢支持"), self)
+        self.titleLabel = BodyLabel(self.tr("感謝支持"), self)
 
         # 创建说明文本
         self.descLabel = BodyLabel(
             self.tr(
-                "目前本人精力有限，您的支持让我有动力继续折腾这个项目！\n感谢您对开源事业的热爱与支持！"
+                "目前本人精力有限，您的支持讓我有動力繼續折騰這個項目！\n感謝您對開源事業的熱愛與支持！"
             ),
             self,
         )
@@ -45,7 +45,7 @@ class DonateDialog(MessageBoxBase):
                 Qt.SmoothTransformation,  # type: ignore
             )
         )
-        self.alipayLabel = BodyLabel(self.tr("支付宝"))
+        self.alipayLabel = BodyLabel(self.tr("支付寶"))
         self.alipayLabel.setAlignment(Qt.AlignCenter)  # type: ignore
         self.alipayContainer.addWidget(self.alipayQR, alignment=Qt.AlignCenter)  # type: ignore
         self.alipayContainer.addWidget(self.alipayLabel)
@@ -84,4 +84,4 @@ class DonateDialog(MessageBoxBase):
 
         # 隐藏是按钮，只显示取消按钮
         self.yesButton.hide()
-        self.cancelButton.setText(self.tr("关闭"))
+        self.cancelButton.setText(self.tr("關閉"))

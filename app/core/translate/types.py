@@ -10,6 +10,7 @@ class TranslatorType(Enum):
     GOOGLE = "google"
     BING = "bing"
     DEEPLX = "deeplx"
+    OPENCC = "opencc"
 
 
 class TargetLanguage(Enum):

@@ -42,10 +42,10 @@ class SettingInterface(ScrollArea):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.setWindowTitle(self.tr("设置"))
+        self.setWindowTitle(self.tr("設置"))
         self.scrollWidget = QWidget()
         self.expandLayout = ExpandLayout(self.scrollWidget)
-        self.settingLabel = QLabel(self.tr("设置"), self)
+        self.settingLabel = QLabel(self.tr("設置"), self)
 
         # 初始化所有设置组
         self.__initGroups()
@@ -61,15 +61,15 @@ class SettingInterface(ScrollArea):
     def __initGroups(self):
         """初始化所有设置组"""
         # 转录配置组
-        self.transcribeGroup = SettingCardGroup(self.tr("转录配置"), self.scrollWidget)
+        self.transcribeGroup = SettingCardGroup(self.tr("轉錄配置"), self.scrollWidget)
         # LLM配置组
         self.llmGroup = SettingCardGroup(self.tr("LLM配置"), self.scrollWidget)
         # 翻译服务组
         self.translate_serviceGroup = SettingCardGroup(
-            self.tr("翻译服务"), self.scrollWidget
+            self.tr("翻譯服務"), self.scrollWidget
         )
         # 翻译与优化组
-        self.translateGroup = SettingCardGroup(self.tr("翻译与优化"), self.scrollWidget)
+        self.translateGroup = SettingCardGroup(self.tr("翻譯與優化"), self.scrollWidget)
         # 字幕合成配置组
         self.subtitleGroup = SettingCardGroup(
             self.tr("字幕合成配置"), self.scrollWidget
@@ -77,9 +77,9 @@ class SettingInterface(ScrollArea):
         # 保存配置组
         self.saveGroup = SettingCardGroup(self.tr("保存配置"), self.scrollWidget)
         # 个性化组
-        self.personalGroup = SettingCardGroup(self.tr("个性化"), self.scrollWidget)
+        self.personalGroup = SettingCardGroup(self.tr("個性化"), self.scrollWidget)
         # 关于组
-        self.aboutGroup = SettingCardGroup(self.tr("关于"), self.scrollWidget)
+        self.aboutGroup = SettingCardGroup(self.tr("關於"), self.scrollWidget)
 
     def __initCards(self):
         """初始化所有配置卡片"""
@@ -97,24 +97,31 @@ class SettingInterface(ScrollArea):
         self.subtitleCorrectCard = SwitchSettingCard(
             FIF.EDIT,
             self.tr("字幕校正"),
-            self.tr("字幕处理过程是否对生成的字幕错别字、名词等进行校正"),
+            self.tr("字幕處理過程是否對生成的字幕錯別字、名詞等進行校正"),
             cfg.need_optimize,
             self.translateGroup,
         )
         self.subtitleTranslateCard = SwitchSettingCard(
             FIF.LANGUAGE,
-            self.tr("字幕翻译"),
-            self.tr("字幕处理过程是否对生成的字幕进行翻译"),
+            self.tr("字幕翻譯"),
+            self.tr("字幕處理過程是否對生成的字幕進行翻譯"),
             cfg.need_translate,
             self.translateGroup,
         )
         self.targetLanguageCard = ComboBoxSettingCard(
             cfg.target_language,
             FIF.LANGUAGE,
-            self.tr("目标语言"),
-            self.tr("选择翻译字幕的目标语言"),
+            self.tr("目標語言"),
+            self.tr("選擇翻譯字幕的目標語言"),
             texts=[lang.value for lang in cfg.target_language.validator.options],  # type: ignore
             parent=self.translateGroup,
+        )
+        self.outputTxtCard = SwitchSettingCard(
+            FIF.DOCUMENT,
+            self.tr("導出純文字 (.txt)"),
+            self.tr("除了字幕檔之外，是否也導出純文字版本(即無時間軸的劇本文稿)"),
+            cfg.output_txt,
+            self.translateGroup,
         )
 
         # 字幕合成配置卡片
@@ -122,8 +129,8 @@ class SettingInterface(ScrollArea):
             "",
             self.tr("修改"),
             FIF.FONT,
-            self.tr("字幕样式"),
-            self.tr("选择字幕的样式（颜色、大小、字体等）"),
+            self.tr("字幕樣式"),
+            self.tr("選擇字幕的樣式（顏色、大小、字體等）"),
             self.subtitleGroup,
         )
         self.subtitleLayoutCard = HyperlinkCard(
@@ -131,37 +138,37 @@ class SettingInterface(ScrollArea):
             self.tr("修改"),
             FIF.FONT,
             self.tr("字幕布局"),
-            self.tr("选择字幕的布局（单语、双语）"),
+            self.tr("選擇字幕的佈局（單語、雙語）"),
             self.subtitleGroup,
         )
         self.needVideoCard = SwitchSettingCard(
             FIF.VIDEO,
-            self.tr("需要合成视频"),
-            self.tr("开启时触发合成视频，关闭时跳过"),
+            self.tr("需要合成視頻"),
+            self.tr("開啓時觸發合成視頻，關閉時跳過"),
             cfg.need_video,
             self.subtitleGroup,
         )
         self.softSubtitleCard = SwitchSettingCard(
             FIF.FONT,
-            self.tr("软字幕"),
-            self.tr("开启时字幕可在播放器中关闭或调整，关闭时字幕烧录到视频画面上"),
+            self.tr("軟字幕"),
+            self.tr("開啓時字幕可在播放器中關閉或調整，關閉時字幕燒錄到視頻畫面上"),
             cfg.soft_subtitle,
             self.subtitleGroup,
         )
         self.videoQualityCard = ComboBoxSettingCard(
             cfg.video_quality,
             FIF.SPEED_HIGH,
-            self.tr("视频合成质量"),
-            self.tr("硬字幕视频合成时的质量等级（质量越高文件越大，编码时间越长）"),
+            self.tr("視頻合成質量"),
+            self.tr("硬字幕視頻合成時的質量等級（質量越高文件越大，編碼時間越長）"),
             texts=[quality.value for quality in cfg.video_quality.validator.options],  # type: ignore
             parent=self.subtitleGroup,
         )
 
         # 保存配置卡片
         self.savePathCard = PushSettingCard(
-            self.tr("工作文件夹"),
+            self.tr("工作文件夾"),
             FIF.SAVE,
-            self.tr("工作目录路径"),
+            self.tr("工作目錄路徑"),
             cfg.get(cfg.work_dir),
             self.saveGroup,
         )
@@ -169,65 +176,65 @@ class SettingInterface(ScrollArea):
         # 个性化配置卡片
         self.cacheEnabledCard = SwitchSettingCard(
             FIF.HISTORY,
-            self.tr("启用缓存"),
-            self.tr("相同配置下会复用之前的 ASR 和 LLM 结果；关闭缓存后每次重新生成"),
+            self.tr("啓用緩存"),
+            self.tr("相同配置下會複用之前的 ASR 和 LLM 結果；關閉緩存後每次重新生成"),
             cfg.cache_enabled,
             self.personalGroup,
         )
         self.themeCard = OptionsSettingCard(
             cfg.themeMode,
             FIF.BRUSH,
-            self.tr("应用主题"),
-            self.tr("更改应用程序的外观"),
-            texts=[self.tr("浅色"), self.tr("深色"), self.tr("使用系统设置")],
+            self.tr("應用主題"),
+            self.tr("更改應用程序的外觀"),
+            texts=[self.tr("淺色"), self.tr("深色"), self.tr("使用系統設置")],
             parent=self.personalGroup,
         )
         self.themeColorCard = CustomColorSettingCard(
             cfg.themeColor,
             FIF.PALETTE,
-            self.tr("主题颜色"),
-            self.tr("更改应用程序的主题颜色"),
+            self.tr("主題顏色"),
+            self.tr("更改應用程序的主題顏色"),
             self.personalGroup,
         )
         self.zoomCard = OptionsSettingCard(
             cfg.dpiScale,
             FIF.ZOOM,
-            self.tr("界面缩放"),
-            self.tr("更改小部件和字体的大小"),
-            texts=["100%", "125%", "150%", "175%", "200%", self.tr("使用系统设置")],
+            self.tr("界面縮放"),
+            self.tr("更改小部件和字體的大小"),
+            texts=["100%", "125%", "150%", "175%", "200%", self.tr("使用系統設置")],
             parent=self.personalGroup,
         )
         self.languageCard = ComboBoxSettingCard(
             cfg.language,
             FIF.LANGUAGE,
-            self.tr("语言"),
-            self.tr("设置您偏好的界面语言"),
-            texts=["简体中文", "繁體中文", "English", self.tr("使用系统设置")],
+            self.tr("語言"),
+            self.tr("設置您偏好的界面語言"),
+            texts=["简体中文", "繁體中文", "English", self.tr("使用系統設置")],
             parent=self.personalGroup,
         )
 
         # 关于卡片
         self.helpCard = HyperlinkCard(
             HELP_URL,
-            self.tr("打开帮助页面"),
+            self.tr("打開幫助頁面"),
             FIF.HELP,
-            self.tr("帮助"),
-            self.tr("发现新功能并了解有关VideoCaptioner的使用技巧"),
+            self.tr("幫助"),
+            self.tr("發現新功能並瞭解有關VideoCaptioner的使用技巧"),
             self.aboutGroup,
         )
         self.feedbackCard = PrimaryPushSettingCard(
-            self.tr("提供反馈"),
+            self.tr("提供反饋"),
             FIF.FEEDBACK,
-            self.tr("提供反馈"),
-            self.tr("提供反馈帮助我们改进VideoCaptioner"),
+            self.tr("提供反饋"),
+            self.tr("提供反饋幫助我們改進VideoCaptioner"),
             self.aboutGroup,
         )
         self.aboutCard = PrimaryPushSettingCard(
-            self.tr("检查更新"),
+            self.tr("檢查更新"),
             FIF.INFO,
-            self.tr("关于"),
+            self.tr("關於"),
             "© "
-            + self.tr("版权所有")
+            + self.tr("版權所有")
             + f" {YEAR}, {AUTHOR}. "
             + self.tr("版本")
             + " "
@@ -239,6 +246,7 @@ class SettingInterface(ScrollArea):
         self.translateGroup.addSettingCard(self.subtitleCorrectCard)
         self.translateGroup.addSettingCard(self.subtitleTranslateCard)
         self.translateGroup.addSettingCard(self.targetLanguageCard)
+        self.translateGroup.addSettingCard(self.outputTxtCard)
 
         self.subtitleGroup.addSettingCard(self.subtitleStyleCard)
         self.subtitleGroup.addSettingCard(self.subtitleLayoutCard)
@@ -265,7 +273,7 @@ class SettingInterface(ScrollArea):
             cfg.llm_service,
             FIF.ROBOT,
             self.tr("LLM 提供商"),
-            self.tr("选择大模型提供商，用于字幕断句、优化、翻译"),
+            self.tr("選擇大模型提供商，用於字幕斷句、優化、翻譯"),
             texts=[service.value for service in cfg.llm_service.validator.options],  # type: ignore
             parent=self.llmGroup,
         )
@@ -274,10 +282,10 @@ class SettingInterface(ScrollArea):
         # 创建OPENAI官方API链接卡片
         self.openaiOfficialApiCard = HyperlinkCard(
             "https://api.videocaptioner.cn/register?aff=UrLB",
-            self.tr("访问"),
+            self.tr("訪問"),
             FIF.DEVELOPER_TOOLS,
             self.tr("VideoCaptioner 官方API"),
-            self.tr("集成多种大语言模型，支持高并发字幕优化、翻译"),
+            self.tr("集成多種大語言模型，支持高併發字幕優化、翻譯"),
             self.llmGroup,
         )
         # 默认隐藏
@@ -416,10 +424,10 @@ class SettingInterface(ScrollArea):
 
         # 创建检查连接卡片
         self.checkLLMConnectionCard = PushSettingCard(
-            self.tr("检查连接"),
+            self.tr("檢查連接"),
             FIF.LINK,
-            self.tr("检查 LLM 连接"),
-            self.tr("点击检查 API 连接是否正常，并获取模型列表"),
+            self.tr("檢查 LLM 連接"),
+            self.tr("點擊檢查 API 連接是否正常，並獲取模型列表"),
             self.llmGroup,
         )
 
@@ -432,8 +440,8 @@ class SettingInterface(ScrollArea):
         self.transcribeModelCard = ComboBoxSettingCard(
             cfg.transcribe_model,
             FIF.MICROPHONE,
-            self.tr("转录模型"),
-            self.tr("语音转换文字要使用的语音识别服务"),
+            self.tr("轉錄模型"),
+            self.tr("語音轉換文字要使用的語音識別服務"),
             texts=[model.value for model in cfg.transcribe_model.validator.options],  # type: ignore
             parent=self.transcribeGroup,
         )
@@ -444,7 +452,7 @@ class SettingInterface(ScrollArea):
             cfg.whisper_api_base,
             FIF.LINK,
             self.tr("Whisper API Base URL"),
-            self.tr("输入 Whisper API Base URL"),
+            self.tr("輸入 Whisper API Base URL"),
             "https://api.openai.com/v1",
             self.transcribeGroup,
         )
@@ -454,7 +462,7 @@ class SettingInterface(ScrollArea):
             cfg.whisper_api_key,
             FIF.FINGERPRINT,
             self.tr("Whisper API Key"),
-            self.tr("输入 Whisper API Key"),
+            self.tr("輸入 Whisper API Key"),
             "sk-",
             self.transcribeGroup,
         )
@@ -464,7 +472,7 @@ class SettingInterface(ScrollArea):
             cfg.whisper_api_model,
             FIF.ROBOT,  # type: ignore
             self.tr("Whisper 模型"),
-            self.tr("选择 Whisper 模型"),
+            self.tr("選擇 Whisper 模型"),
             [
                 "whisper-1",
                 "whisper-large-v3-turbo",
@@ -474,10 +482,10 @@ class SettingInterface(ScrollArea):
 
         # 测试连接按钮
         self.checkWhisperConnectionCard = PushSettingCard(
-            self.tr("测试 Whisper 连接"),
+            self.tr("測試 Whisper 連接"),
             FIF.CONNECT,
-            self.tr("测试 Whisper API 连接"),
-            self.tr("点击测试 API 连接是否正常"),
+            self.tr("測試 Whisper API 連接"),
+            self.tr("點擊測試 API 連接是否正常"),
             self.transcribeGroup,
         )
 
@@ -493,8 +501,8 @@ class SettingInterface(ScrollArea):
         self.translatorServiceCard = ComboBoxSettingCard(
             cfg.translator_service,
             FIF.ROBOT,
-            self.tr("翻译服务"),
-            self.tr("选择翻译服务"),
+            self.tr("翻譯服務"),
+            self.tr("選擇翻譯服務"),
             texts=[
                 service.value
                 for service in cfg.translator_service.validator.options  # type: ignore
@@ -506,8 +514,8 @@ class SettingInterface(ScrollArea):
         # 反思翻译开关
         self.needReflectTranslateCard = SwitchSettingCard(
             FIF.EDIT,
-            self.tr("需要反思翻译"),
-            self.tr("启用反思翻译可以提高翻译质量，但耗费更多时间和token"),
+            self.tr("需要反思翻譯"),
+            self.tr("啓用反思翻譯可以提高翻譯質量，但耗費更多時間和token"),
             cfg.need_reflect_translate,
             self.translate_serviceGroup,
         )
@@ -516,8 +524,8 @@ class SettingInterface(ScrollArea):
         self.deeplxEndpointCard = LineEditSettingCard(
             cfg.deeplx_endpoint,
             FIF.LINK,
-            self.tr("DeepLx 后端"),
-            self.tr("输入 DeepLx 的后端地址(开启deeplx翻译时必填)"),
+            self.tr("DeepLx 後端"),
+            self.tr("輸入 DeepLx 的後端地址(開啓deeplx翻譯時必填)"),
             "https://api.deeplx.org/translate",
             self.translate_serviceGroup,
         )
@@ -526,8 +534,8 @@ class SettingInterface(ScrollArea):
         self.batchSizeCard = RangeSettingCard(
             cfg.batch_size,
             FIF.ALIGNMENT,
-            self.tr("批处理大小"),
-            self.tr("每批处理字幕的数量，建议为 10 的倍数"),
+            self.tr("批處理大小"),
+            self.tr("每批處理字幕的數量，建議為 10 的倍數"),
             parent=self.translate_serviceGroup,
         )
 
@@ -535,9 +543,9 @@ class SettingInterface(ScrollArea):
         self.threadNumCard = RangeSettingCard(
             cfg.thread_num,
             FIF.SPEED_HIGH,
-            self.tr("线程数"),
+            self.tr("線程數"),
             self.tr(
-                "请求并行处理的数量，模型服务商允许的情况下建议尽可能大，数值越大速度越快"
+                "請求並行處理的數量，模型服務商允許的情況下建議儘可能大，數值越大速度越快"
             ),
             parent=self.translate_serviceGroup,
         )
@@ -696,14 +704,14 @@ class SettingInterface(ScrollArea):
         """显示重启提示"""
         InfoBar.success(
             self.tr("更新成功"),
-            self.tr("配置将在重启后生效"),
+            self.tr("配置將在重啓後生效"),
             duration=INFOBAR_DURATION_SUCCESS,
             parent=self,
         )
 
     def __onsavePathCardClicked(self):
         """处理保存路径卡片点击事件"""
-        folder = QFileDialog.getExistingDirectory(self, self.tr("选择文件夹"), "./")
+        folder = QFileDialog.getExistingDirectory(self, self.tr("選擇文件夾"), "./")
         if not folder or cfg.get(cfg.work_dir) == folder:
             return
         cfg.set(cfg.work_dir, folder)
@@ -714,16 +722,16 @@ class SettingInterface(ScrollArea):
         if is_enabled:
             enable_cache()
             InfoBar.success(
-                self.tr("缓存已启用"),
-                self.tr("ASR、翻译等操作将优先使用缓存"),
+                self.tr("緩存已啓用"),
+                self.tr("ASR、翻譯等操作將優先使用緩存"),
                 duration=INFOBAR_DURATION_SUCCESS,
                 parent=self,
             )
         else:
             disable_cache()
             InfoBar.warning(
-                self.tr("缓存已禁用"),
-                self.tr("所有操作将重新生成，不使用缓存（建议开启缓存）"),
+                self.tr("緩存已禁用"),
+                self.tr("所有操作將重新生成，不使用緩存（建議開啓緩存）"),
                 duration=INFOBAR_DURATION_WARNING,
                 parent=self,
             )
@@ -759,7 +767,7 @@ class SettingInterface(ScrollArea):
 
         # 禁用检查按钮，显示加载状态
         self.checkLLMConnectionCard.button.setEnabled(False)
-        self.checkLLMConnectionCard.button.setText(self.tr("正在检查..."))
+        self.checkLLMConnectionCard.button.setText(self.tr("正在檢查..."))
 
         # 立即恢复滚动位置（防止按钮状态改变导致的自动滚动）
         self.verticalScrollBar().setValue(scroll_position)
@@ -773,9 +781,9 @@ class SettingInterface(ScrollArea):
     def onConnectionCheckError(self, message):
         """处理连接检查错误事件"""
         self.checkLLMConnectionCard.button.setEnabled(True)
-        self.checkLLMConnectionCard.button.setText(self.tr("检查连接"))
+        self.checkLLMConnectionCard.button.setText(self.tr("檢查連接"))
         InfoBar.error(
-            self.tr("LLM 连接测试错误"),
+            self.tr("LLM 連接測試錯誤"),
             message,
             duration=INFOBAR_DURATION_ERROR,
             parent=self,
@@ -784,7 +792,7 @@ class SettingInterface(ScrollArea):
     def onConnectionCheckFinished(self, is_success, message, models):
         """处理连接检查完成事件"""
         self.checkLLMConnectionCard.button.setEnabled(True)
-        self.checkLLMConnectionCard.button.setText(self.tr("检查连接"))
+        self.checkLLMConnectionCard.button.setText(self.tr("檢查連接"))
 
         # 获取当前服务
         current_service = LLMServiceEnum(self.llmServiceCard.comboBox.currentText())
@@ -798,21 +806,21 @@ class SettingInterface(ScrollArea):
                 service_config["model"].comboBox.setCurrentText(temp)
 
             InfoBar.success(
-                self.tr("获取模型列表成功:"),
-                self.tr("一共") + str(len(models)) + self.tr("个模型"),
+                self.tr("獲取模型列表成功:"),
+                self.tr("一共") + str(len(models)) + self.tr("個模型"),
                 duration=INFOBAR_DURATION_SUCCESS,
                 parent=self,
             )
         if not is_success:
             InfoBar.error(
-                self.tr("LLM 连接测试错误"),
+                self.tr("LLM 連接測試錯誤"),
                 message,
                 duration=INFOBAR_DURATION_ERROR,
                 parent=self,
             )
         else:
             InfoBar.success(
-                self.tr("LLM 连接测试成功"),
+                self.tr("LLM 連接測試成功"),
                 message,
                 duration=INFOBAR_DURATION_SUCCESS,
                 parent=self,
@@ -878,6 +886,8 @@ class SettingInterface(ScrollArea):
         elif service in [TranslatorServiceEnum.OPENAI.value]:
             for card in openai_cards:
                 card.setVisible(True)
+        elif service in [TranslatorServiceEnum.OPENCC.value]:
+            pass # OpenCC 不需要額外設定卡片
 
         # 更新布局
         self.translate_serviceGroup.adjustSize()
@@ -916,7 +926,7 @@ class SettingInterface(ScrollArea):
         if not base_url:
             InfoBar.warning(
                 self.tr("配置不完整"),
-                self.tr("请输入 Whisper API Base URL"),
+                self.tr("請輸入 Whisper API Base URL"),
                 duration=INFOBAR_DURATION_ERROR,
                 parent=self,
             )
@@ -925,7 +935,7 @@ class SettingInterface(ScrollArea):
         if not api_key:
             InfoBar.warning(
                 self.tr("配置不完整"),
-                self.tr("请输入 Whisper API Key"),
+                self.tr("請輸入 Whisper API Key"),
                 duration=INFOBAR_DURATION_ERROR,
                 parent=self,
             )
@@ -934,7 +944,7 @@ class SettingInterface(ScrollArea):
         if not model:
             InfoBar.warning(
                 self.tr("配置不完整"),
-                self.tr("请输入 Whisper 模型名称"),
+                self.tr("請輸入 Whisper 模型名稱"),
                 duration=INFOBAR_DURATION_ERROR,
                 parent=self,
             )
@@ -942,7 +952,7 @@ class SettingInterface(ScrollArea):
 
         # 禁用按钮，显示加载状态
         self.checkWhisperConnectionCard.button.setEnabled(False)
-        self.checkWhisperConnectionCard.button.setText(self.tr("正在测试..."))
+        self.checkWhisperConnectionCard.button.setText(self.tr("正在測試..."))
 
         # 立即恢复滚动位置（防止按钮状态改变导致的自动滚动）
         self.verticalScrollBar().setValue(scroll_position)
@@ -961,18 +971,18 @@ class SettingInterface(ScrollArea):
         """处理 Whisper 连接检查完成事件"""
         # 恢复按钮状态
         self.checkWhisperConnectionCard.button.setEnabled(True)
-        self.checkWhisperConnectionCard.button.setText(self.tr("测试 Whisper 连接"))
+        self.checkWhisperConnectionCard.button.setText(self.tr("測試 Whisper 連接"))
 
         if success:
             InfoBar.success(
-                self.tr("连接成功"),
-                self.tr("Whisper API 连接成功！\n转录结果:") + result,
+                self.tr("連接成功"),
+                self.tr("Whisper API 連接成功！\n轉錄結果:") + result,
                 duration=INFOBAR_DURATION_SUCCESS,
                 parent=self,
             )
         else:
             InfoBar.error(
-                self.tr("连接失败"),
+                self.tr("連接失敗"),
                 self.tr(f"Whisper API 连接失败！\n{result}"),
                 duration=INFOBAR_DURATION_ERROR,
                 parent=self,
@@ -982,10 +992,10 @@ class SettingInterface(ScrollArea):
         """处理 Whisper 连接检查错误事件"""
         # 恢复按钮状态
         self.checkWhisperConnectionCard.button.setEnabled(True)
-        self.checkWhisperConnectionCard.button.setText(self.tr("测试 Whisper 连接"))
+        self.checkWhisperConnectionCard.button.setText(self.tr("測試 Whisper 連接"))
 
         InfoBar.error(
-            self.tr("测试错误"),
+            self.tr("測試錯誤"),
             message,
             duration=INFOBAR_DURATION_ERROR,
             parent=self,

@@ -120,11 +120,11 @@ class DownloadDialog(MessageBoxBase):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setup_ui()
-        self.setWindowTitle(self.tr("下载模型"))
+        self.setWindowTitle(self.tr("下載模型"))
         self.download_thread = None
 
     def setup_ui(self):
-        self.titleLabel = BodyLabel(self.tr("下载模型"), self)
+        self.titleLabel = BodyLabel(self.tr("下載模型"), self)
 
         # 添加模型选择下拉框
         self.model_combo = ComboBox(self)
@@ -144,7 +144,7 @@ class DownloadDialog(MessageBoxBase):
         self.progress_label.hide()
 
         # 下载按钮
-        self.download_button = PushButton(self.tr("下载"), self)
+        self.download_button = PushButton(self.tr("下載"), self)
         self.download_button.clicked.connect(self.start_download)
 
         # 添加到布局
@@ -158,7 +158,7 @@ class DownloadDialog(MessageBoxBase):
 
         # 只显示取消按钮
         self.yesButton.hide()
-        self.cancelButton.setText(self.tr("关闭"))
+        self.cancelButton.setText(self.tr("關閉"))
 
     def start_download(self):
         selected_index = self.model_combo.currentIndex()
@@ -169,7 +169,7 @@ class DownloadDialog(MessageBoxBase):
         if os.path.exists(save_path):
             InfoBar.warning(
                 title=self.tr("提示"),
-                content=self.tr("模型文件已存在,无需重复下载"),
+                content=self.tr("模型文件已存在,無需重複下載"),
                 parent=self.window(),
                 duration=3000,
             )
@@ -192,16 +192,16 @@ class DownloadDialog(MessageBoxBase):
     def download_finished(self):
         InfoBar.success(
             title=self.tr("完成"),
-            content=self.tr("模型下载完成!"),
+            content=self.tr("模型下載完成!"),
             parent=self.window(),
             duration=3000,
         )
         self.download_button.setEnabled(True)
-        self.progress_label.setText(self.tr("下载完成"))
+        self.progress_label.setText(self.tr("下載完成"))
 
     def download_error(self, error):
         InfoBar.error(
-            title=self.tr("下载错误"),
+            title=self.tr("下載錯誤"),
             content=error,
             parent=self.window(),
             duration=5000,
@@ -239,7 +239,7 @@ class WhisperCppDownloadDialog(MessageBoxBase):
         self._setup_progress_section(layout)
 
         self.viewLayout.addLayout(layout)
-        self.cancelButton.setText(self.tr("关闭"))
+        self.cancelButton.setText(self.tr("關閉"))
         self.yesButton.hide()
 
     def _setup_program_section(self, layout):
@@ -259,7 +259,7 @@ class WhisperCppDownloadDialog(MessageBoxBase):
             program_status.setStyleSheet("color: green")
             layout.addWidget(program_status)
         else:
-            desc_label = BodyLabel(self.tr("未下载 WhisperCpp 程序"), self)
+            desc_label = BodyLabel(self.tr("未下載 WhisperCpp 程序"), self)
             layout.addWidget(desc_label)
 
     def _setup_model_section(self, layout):
@@ -268,11 +268,11 @@ class WhisperCppDownloadDialog(MessageBoxBase):
         title_layout = QHBoxLayout()
 
         # 标题
-        model_title = SubtitleLabel(self.tr("模型下载"), self)
+        model_title = SubtitleLabel(self.tr("模型下載"), self)
         title_layout.addWidget(model_title)
 
         # 添加打开文件夹按钮
-        open_folder_btn = HyperlinkButton("", self.tr("打开模型文件夹"), parent=self)
+        open_folder_btn = HyperlinkButton("", self.tr("打開模型文件夾"), parent=self)
         open_folder_btn.setIcon(FIF.FOLDER)
         open_folder_btn.clicked.connect(self._open_model_folder)
         title_layout.addStretch()
@@ -293,7 +293,7 @@ class WhisperCppDownloadDialog(MessageBoxBase):
         table.setSelectionMode(TableWidget.NoSelection)
         table.setColumnCount(4)
         table.setHorizontalHeaderLabels(
-            [self.tr("模型名称"), self.tr("大小"), self.tr("状态"), self.tr("操作")]
+            [self.tr("模型名稱"), self.tr("大小"), self.tr("狀態"), self.tr("操作")]
         )
 
         # 设置表格样式
@@ -355,7 +355,7 @@ class WhisperCppDownloadDialog(MessageBoxBase):
         # 状态
         model_bin_path = os.path.join(MODEL_PATH, model["value"])
         status_item = QTableWidgetItem(
-            self.tr("已下载") if os.path.exists(model_bin_path) else self.tr("未下载")
+            self.tr("已下載") if os.path.exists(model_bin_path) else self.tr("未下載")
         )
         if os.path.exists(model_bin_path):
             status_item.setForeground(Qt.green)  # type: ignore
@@ -369,7 +369,7 @@ class WhisperCppDownloadDialog(MessageBoxBase):
 
         download_btn = HyperlinkButton(
             "",
-            self.tr("重新下载") if os.path.exists(model_bin_path) else self.tr("下载"),
+            self.tr("重新下載") if os.path.exists(model_bin_path) else self.tr("下載"),
             parent=self,
         )
         download_btn.setIcon(FIF.DOWNLOAD)
@@ -384,8 +384,8 @@ class WhisperCppDownloadDialog(MessageBoxBase):
         """下载选中的模型"""
         if WhisperCppDownloadDialog.is_downloading:
             InfoBar.warning(
-                self.tr("下载进行中"),
-                self.tr("请等待当前下载任务完成"),
+                self.tr("下載進行中"),
+                self.tr("請等待當前下載任務完成"),
                 duration=3000,
                 parent=self,
             )
@@ -413,14 +413,14 @@ class WhisperCppDownloadDialog(MessageBoxBase):
             WhisperCppDownloadDialog.is_downloading = False
             self._set_all_download_buttons_enabled(True)
             # 更新状态
-            status_item = QTableWidgetItem(self.tr("已下载"))
+            status_item = QTableWidgetItem(self.tr("已下載"))
             status_item.setForeground(Qt.green)  # type: ignore
             status_item.setTextAlignment(Qt.AlignCenter)  # type: ignore
             self.model_table.setItem(row, 2, status_item)
 
             # 更新下载按钮文本
             if download_btn:
-                download_btn.setText(self.tr("重新下载"))
+                download_btn.setText(self.tr("重新下載"))
                 download_btn.setEnabled(True)
 
             # 获取当前下载的模型信息
@@ -460,7 +460,7 @@ class WhisperCppDownloadDialog(MessageBoxBase):
                     logger.error(f"更新模型选择失败: {e}")
 
             InfoBar.success(
-                self.tr("下载成功"),
+                self.tr("下載成功"),
                 self.tr(f"{model['label']} 模型已下载完成"),
                 duration=3000,
                 parent=self,
@@ -474,7 +474,7 @@ class WhisperCppDownloadDialog(MessageBoxBase):
             if download_btn:
                 download_btn.setEnabled(True)
 
-            InfoBar.error(self.tr("下载失败"), str(error), duration=3000, parent=self)
+            InfoBar.error(self.tr("下載失敗"), str(error), duration=3000, parent=self)
             self.progress_bar.hide()
             self.progress_label.hide()
 
@@ -527,14 +527,14 @@ class WhisperCppSettingWidget(QWidget):
         self.container.setStyleSheet("QWidget{background: transparent}")
         self.containerLayout = QVBoxLayout(self.container)
 
-        self.setting_group = SettingCardGroup(self.tr("Whisper CPP 设置"), self)
+        self.setting_group = SettingCardGroup(self.tr("Whisper CPP 設置"), self)
 
         # 模型选择
         self.model_card = ComboBoxSettingCard(
             cfg.whisper_model,
             FIF.ROBOT,
             self.tr("模型"),
-            self.tr("选择Whisper模型"),
+            self.tr("選擇Whisper模型"),
             [model.value for model in WhisperModelEnum],
             self.setting_group,
         )
@@ -554,8 +554,8 @@ class WhisperCppSettingWidget(QWidget):
         self.language_card = ComboBoxSettingCard(
             cfg.transcribe_language,
             FIF.LANGUAGE,
-            self.tr("源语言"),
-            self.tr("音视频中说话的语言，默认根据前30秒自动识别"),
+            self.tr("源語言"),
+            self.tr("音視頻中説話的語言，默認根據前30秒自動識別"),
             [language.value for language in TranscribeLanguageEnum],
             self.setting_group,
         )
@@ -566,7 +566,7 @@ class WhisperCppSettingWidget(QWidget):
             self.tr("管理模型"),
             FIF.DOWNLOAD,  # 使用下载图标
             self.tr("模型管理"),
-            self.tr("下载或更新 Whisper CPP 模型"),
+            self.tr("下載或更新 Whisper CPP 模型"),
             self.setting_group,  # 添加到设置组
         )
 

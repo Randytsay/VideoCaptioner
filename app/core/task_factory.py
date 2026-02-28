@@ -6,6 +6,7 @@ from app.common.config import cfg
 from app.config import MODEL_PATH, SUBTITLE_STYLE_PATH
 from app.core.entities import (
     LANGUAGES,
+    FileConflictPolicy,
     FullProcessTask,
     LLMServiceEnum,
     SubtitleConfig,
@@ -28,6 +29,33 @@ class TaskFactory:
         if style_path.exists():
             return style_path.read_text(encoding="utf-8")
         return ""
+
+    @staticmethod
+    def resolve_output_path(
+        output_path: str,
+        policy: FileConflictPolicy = FileConflictPolicy.OVERWRITE,
+    ) -> Optional[str]:
+        """根據衝突策略處理輸出路徑
+
+        Returns:
+            處理後的路徑，若策略為 SKIP 且檔案已存在則回傳 None
+        """
+        p = Path(output_path)
+        if not p.exists():
+            return output_path
+
+        if policy == FileConflictPolicy.OVERWRITE:
+            return output_path
+        elif policy == FileConflictPolicy.SKIP:
+            return None
+        elif policy == FileConflictPolicy.RENAME:
+            counter = 1
+            while True:
+                new_path = p.parent / f"{p.stem}_{counter}{p.suffix}"
+                if not new_path.exists():
+                    return str(new_path)
+                counter += 1
+        return output_path
 
     @staticmethod
     def get_rounded_style() -> dict:
@@ -68,11 +96,26 @@ class TaskFactory:
             need_word_time_stamp = False
             output_path = str(Path(file_path).parent / f"{file_name}.srt")
 
+        # Collect output formats
+        output_formats = []
+        if cfg.transcribe_format_srt.value:
+            output_formats.append("srt")
+        if cfg.transcribe_format_vtt.value:
+            output_formats.append("vtt")
+        if cfg.transcribe_format_ass.value:
+            output_formats.append("ass")
+        if cfg.transcribe_format_json.value:
+            output_formats.append("json")
+        if cfg.transcribe_format_txt.value:
+            output_formats.append("txt")
+        if not output_formats:
+            output_formats.append("srt")
+
         config = TranscribeConfig(
             transcribe_model=cfg.transcribe_model.value,
             transcribe_language=LANGUAGES[cfg.transcribe_language.value.value],
             need_word_time_stamp=need_word_time_stamp,
-            output_format=cfg.transcribe_output_format.value,
+            output_formats=output_formats,
             # Whisper Cpp 配置
             whisper_model=cfg.whisper_model.value,
             # Whisper API 配置

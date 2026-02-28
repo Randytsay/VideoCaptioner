@@ -5,9 +5,11 @@ from typing import Dict, Optional
 
 from PyQt5.QtCore import QThread, pyqtSignal
 
+from app.common.config import cfg
 from app.core.entities import (
     BatchTaskStatus,
     BatchTaskType,
+    FileConflictPolicy,
     TranscribeTask,
 )
 from app.core.task_factory import TaskFactory
@@ -111,8 +113,19 @@ class BatchProcessThread(QThread):
             self.threads.remove(batch_task.current_thread)
 
     def _handle_transcribe_task(self, batch_task: BatchTask):
-        # self.max_concurrent_tasks = 3
         task = self.factory.create_transcribe_task(batch_task.file_path)
+
+        # 檔案衝突處理
+        policy = cfg.get(cfg.file_conflict_policy)
+        resolved = self.factory.resolve_output_path(task.output_path, policy)
+        if resolved is None:
+            # SKIP: 檔案已存在，跳過
+            batch_task.status = BatchTaskStatus.COMPLETED
+            self.task_progress.emit(batch_task.file_path, 100, "已跳過")
+            self.task_completed.emit(batch_task.file_path)
+            return
+        task.output_path = resolved
+
         thread = TranscriptThread(task)
         batch_task.current_thread = thread
 

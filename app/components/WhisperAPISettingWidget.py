@@ -39,14 +39,14 @@ class WhisperAPISettingWidget(QWidget):
         self.container.setStyleSheet("QWidget{background: transparent}")
         self.containerLayout = QVBoxLayout(self.container)
 
-        self.setting_group = SettingCardGroup(self.tr("Whisper API 设置"), self)
+        self.setting_group = SettingCardGroup(self.tr("Whisper API 設置"), self)
 
         # API Base URL
         self.base_url_card = LineEditSettingCard(
             cfg.whisper_api_base,
             FIF.LINK,
             self.tr("API Base URL"),
-            self.tr("输入 Whisper API Base URL"),
+            self.tr("輸入 Whisper API Base URL"),
             "https://api.openai.com/v1",
             self.setting_group,
         )
@@ -56,7 +56,7 @@ class WhisperAPISettingWidget(QWidget):
             cfg.whisper_api_key,
             FIF.FINGERPRINT,
             self.tr("API Key"),
-            self.tr("输入 Whisper API Key"),
+            self.tr("輸入 Whisper API Key"),
             "sk-",
             self.setting_group,
         )
@@ -66,7 +66,7 @@ class WhisperAPISettingWidget(QWidget):
             cfg.whisper_api_model,
             FIF.ROBOT,  # type: ignore
             self.tr("Whisper 模型"),
-            self.tr("选择 Whisper 模型"),
+            self.tr("選擇 Whisper 模型"),
             ["whisper-large-v3", "whisper-large-v3-turbo", "whisper-1"],
             self.setting_group,
         )
@@ -75,8 +75,8 @@ class WhisperAPISettingWidget(QWidget):
         self.language_card = ComboBoxSettingCard(
             cfg.transcribe_language,
             FIF.LANGUAGE,
-            self.tr("源语言"),
-            self.tr("音视频中说话的语言，默认根据前30秒自动识别"),
+            self.tr("源語言"),
+            self.tr("音視頻中説話的語言，默認根據前30秒自動識別"),
             [lang.value for lang in TranscribeLanguageEnum],
             self.setting_group,
         )
@@ -85,18 +85,18 @@ class WhisperAPISettingWidget(QWidget):
         self.prompt_card = LineEditSettingCard(
             cfg.whisper_api_prompt,
             FIF.CHAT,
-            self.tr("提示词"),
-            self.tr("可选的提示词,默认空"),
+            self.tr("提示詞"),
+            self.tr("可選的提示詞,默認空"),
             "",
             self.setting_group,
         )
 
         # 添加测试连接按钮
         self.check_connection_card = PushSettingCard(
-            self.tr("测试连接"),
+            self.tr("測試連接"),
             FIF.CONNECT,
-            self.tr("测试 Whisper API 连接"),
-            self.tr("点击测试 API 连接是否正常"),
+            self.tr("測試 Whisper API 連接"),
+            self.tr("點擊測試 API 連接是否正常"),
             self.setting_group,
         )
 
@@ -140,7 +140,7 @@ class WhisperAPISettingWidget(QWidget):
         if not base_url or not api_key or not model:
             InfoBar.warning(
                 self.tr("配置不完整"),
-                self.tr("请输入 API Base URL、API Key 和 model"),
+                self.tr("請輸入 API Base URL、API Key 和 model"),
                 duration=INFOBAR_DURATION_ERROR,
                 position=InfoBarPosition.TOP,
                 parent=self.window(),
@@ -149,7 +149,7 @@ class WhisperAPISettingWidget(QWidget):
 
         # 禁用按钮，显示加载状态
         self.check_connection_card.button.setEnabled(False)
-        self.check_connection_card.button.setText(self.tr("正在测试..."))
+        self.check_connection_card.button.setText(self.tr("正在測試..."))
 
         # 创建并启动测试线程
         self.connection_thread = WhisperConnectionThread(base_url, api_key, model)
@@ -161,19 +161,19 @@ class WhisperAPISettingWidget(QWidget):
         """处理连接检查完成事件"""
         # 恢复按钮状态
         self.check_connection_card.button.setEnabled(True)
-        self.check_connection_card.button.setText(self.tr("测试连接"))
+        self.check_connection_card.button.setText(self.tr("測試連接"))
 
         if success:
             InfoBar.success(
-                self.tr("连接成功"),
-                self.tr("Whisper API 连接成功！") + "\n" + result,
+                self.tr("連接成功"),
+                self.tr("Whisper API 連接成功！") + "\n" + result,
                 duration=INFOBAR_DURATION_SUCCESS,
                 position=InfoBarPosition.BOTTOM,
                 parent=self.window(),
             )
         else:
             InfoBar.error(
-                self.tr("连接失败"),
+                self.tr("連接失敗"),
                 self.tr(f"Whisper API 连接失败！\n{result}"),
                 duration=INFOBAR_DURATION_ERROR,
                 position=InfoBarPosition.BOTTOM,
@@ -184,9 +184,9 @@ class WhisperAPISettingWidget(QWidget):
         """处理连接检查错误事件"""
         # 恢复按钮状态
         self.check_connection_card.button.setEnabled(True)
-        self.check_connection_card.button.setText(self.tr("测试连接"))
+        self.check_connection_card.button.setText(self.tr("測試連接"))
         InfoBar.error(
-            self.tr("测试错误"),
+            self.tr("測試錯誤"),
             message,
             duration=INFOBAR_DURATION_ERROR,
             position=InfoBarPosition.BOTTOM,

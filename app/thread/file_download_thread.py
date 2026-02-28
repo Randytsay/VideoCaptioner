@@ -196,7 +196,7 @@ class FileDownloadThread(QThread):
 
     def run(self):
         try:
-            self.progress.emit(0, self.tr("正在连接..."))
+            self.progress.emit(0, self.tr("正在連接..."))
 
             # 选择下载器：优先 aria2c，否则回退到 requests
             if Aria2Downloader.is_available():
@@ -214,7 +214,7 @@ class FileDownloadThread(QThread):
             if success:
                 self.finished.emit()
             else:
-                self.error.emit(self.tr("下载失败"))
+                self.error.emit(self.tr("下載失敗"))
 
         except Exception as e:
             logger.exception("下载异常")

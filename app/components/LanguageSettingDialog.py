@@ -36,7 +36,7 @@ class LanguageSettingDialog(MessageBoxBase):
 
     def _setup_ui(self):
         """设置UI"""
-        self.yesButton.setText(self.tr("确定"))
+        self.yesButton.setText(self.tr("確定"))
         self.cancelButton.setText(self.tr("取消"))
 
         # 主布局
@@ -45,8 +45,8 @@ class LanguageSettingDialog(MessageBoxBase):
         # 使用自定义 SettingCard 代替 ComboBoxSettingCard（因为需要动态选项）
         self.language_card = SettingCard(
             FIF.LANGUAGE,
-            self.tr("源语言"),
-            self.tr("音视频中说话的语言，默认根据前30秒自动识别"),
+            self.tr("源語言"),
+            self.tr("音視頻中説話的語言，默認根據前30秒自動識別"),
             self,
         )
 
@@ -88,16 +88,16 @@ class LanguageSettingDialog(MessageBoxBase):
 
         self.accept()
         InfoBar.success(
-            self.tr("设置已保存"),
-            self.tr("语言设置已更新"),
+            self.tr("設置已保存"),
+            self.tr("語言設置已更新"),
             duration=3000,
             parent=self.window(),
             position=InfoBarPosition.BOTTOM,
         )
         if cfg.transcribe_language.value == TranscribeLanguageEnum.JAPANESE:
             InfoBar.warning(
-                self.tr("请注意身体！！"),
-                self.tr("小心肝儿,注意身体哦~"),
+                self.tr("請注意身體！！"),
+                self.tr("小心肝兒,注意身體哦~"),
                 duration=2000,
                 parent=self.window(),
                 position=InfoBarPosition.BOTTOM,

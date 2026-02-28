@@ -26,6 +26,9 @@ from qfluentwidgets import (
     FluentIcon as FIF,
 )
 
+from app.common.config import cfg
+from app.common.signal_bus import signalBus
+from app.components.TranscriptionSettingDialog import TranscriptionSettingDialog
 from app.core.constant import (
     INFOBAR_DURATION_INFO,
     INFOBAR_DURATION_SUCCESS,
@@ -34,10 +37,15 @@ from app.core.constant import (
 from app.core.entities import (
     BatchTaskStatus,
     BatchTaskType,
+    FasterWhisperModelEnum,
+    FileConflictPolicy,
     SupportedAudioFormats,
     SupportedSubtitleFormats,
     SupportedVideoFormats,
+    TranscribeModelEnum,
 )
+from app.core.utils.platform_utils import get_available_transcribe_models
+from app.components.folder_dialog import FolderSelectionDialog
 from app.thread.batch_process_thread import (
     BatchProcessThread,
     BatchTask,
@@ -48,7 +56,7 @@ class BatchProcessInterface(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setObjectName("batchProcessInterface")
-        self.setWindowTitle(self.tr("批量处理"))
+        self.setWindowTitle(self.tr("批量處理"))
         self.setAcceptDrops(True)
         self.batch_thread = BatchProcessThread()
 
@@ -68,25 +76,57 @@ class BatchProcessInterface(QWidget):
         # 任务类型选择
         self.task_type_combo = ComboBox()
         self.task_type_combo.addItems([str(task_type) for task_type in BatchTaskType])
-        self.task_type_combo.setCurrentText(str(BatchTaskType.FULL_PROCESS))
+        self.task_type_combo.setCurrentText(str(BatchTaskType.TRANSCRIBE))
+
+        # 辨識模型選擇
+        self.model_combo = ComboBox()
+        available_models = get_available_transcribe_models()
+        self.model_combo.addItems([model.value for model in available_models])
+        # 同步當前全域設定的模型
+        current_model_value = cfg.get(cfg.transcribe_model).value
+        self.model_combo.setCurrentText(current_model_value)
+
+        # FasterWhisper 子模型選擇 (tiny/base/small/medium/large 等)
+        self.sub_model_combo = ComboBox()
+        self.sub_model_combo.addItems([m.value for m in FasterWhisperModelEnum])
+        current_sub_model = cfg.get(cfg.faster_whisper_model).value
+        self.sub_model_combo.setCurrentText(current_sub_model)
+        # 僅在 FasterWhisper 被選中時顯示
+        self.sub_model_combo.setVisible(
+            current_model_value == TranscribeModelEnum.FASTER_WHISPER.value
+        )
 
         # 任务类型说明
         self.task_type_descriptions = {
-            str(BatchTaskType.TRANSCRIBE): self.tr("仅进行语音识别，生成字幕文件"),
-            str(BatchTaskType.SUBTITLE): self.tr("对已有字幕进行分割、优化或翻译"),
-            str(BatchTaskType.TRANS_SUB): self.tr("先转录再处理字幕，不合成视频"),
-            str(BatchTaskType.FULL_PROCESS): self.tr("转录 → 字幕处理 → 合成视频"),
+            str(BatchTaskType.TRANSCRIBE): self.tr("僅進行語音識別，生成字幕文件"),
+            str(BatchTaskType.SUBTITLE): self.tr("對已有字幕進行分割、優化或翻譯"),
+            str(BatchTaskType.TRANS_SUB): self.tr("先轉錄再處理字幕，不合成視頻"),
+            str(BatchTaskType.FULL_PROCESS): self.tr("轉錄 → 字幕處理 → 合成視頻"),
         }
 
         # 控制按钮
         self.add_file_btn = PushButton(self.tr("添加文件"), icon=FIF.ADD)
-        self.start_all_btn = PushButton(self.tr("开始处理"), icon=FIF.PLAY)
+        self.add_folder_btn = PushButton(self.tr("添加文件夾"), icon=FIF.FOLDER)
+        self.start_all_btn = PushButton(self.tr("開始處理"), icon=FIF.PLAY)
         self.clear_btn = PushButton(self.tr("清空列表"), icon=FIF.DELETE)
 
         # 添加到顶部布局
         top_layout.addWidget(self.task_type_combo)
+        top_layout.addWidget(self.model_combo)
+        top_layout.addWidget(self.sub_model_combo)
         top_layout.addWidget(self.add_file_btn)
+        top_layout.addWidget(self.add_folder_btn)
         top_layout.addWidget(self.clear_btn)
+
+        # 设置按钮
+        self.setting_btn = PushButton(self.tr("轉錄設置"), icon=FIF.SETTING)
+        top_layout.addWidget(self.setting_btn)
+
+        # 檔案衝突處理策略
+        self.conflict_combo = ComboBox()
+        self.conflict_combo.addItems([str(p) for p in FileConflictPolicy])
+        self.conflict_combo.setCurrentText(str(cfg.get(cfg.file_conflict_policy)))
+        top_layout.addWidget(self.conflict_combo)
 
         top_layout.addStretch()
         top_layout.addWidget(self.start_all_btn)
@@ -94,7 +134,7 @@ class BatchProcessInterface(QWidget):
         # 创建任务表格
         self.task_table = TableWidget()
         self.task_table.setColumnCount(3)
-        self.task_table.setHorizontalHeaderLabels(["文件名", "进度", "状态"])
+        self.task_table.setHorizontalHeaderLabels([self.tr("文件名"), self.tr("進度"), self.tr("狀態")])
 
         # 设置表格样式
         self.task_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
@@ -126,15 +166,23 @@ class BatchProcessInterface(QWidget):
 
         # 连接信号
         self.add_file_btn.clicked.connect(self.on_add_file_clicked)
+        self.add_folder_btn.clicked.connect(self.on_add_folder_clicked)
         self.start_all_btn.clicked.connect(self.start_all_tasks)
         self.clear_btn.clicked.connect(self.clear_tasks)
+        self.setting_btn.clicked.connect(self.on_setting_clicked)
         self.task_type_combo.currentTextChanged.connect(self.on_task_type_changed)
+        self.model_combo.currentTextChanged.connect(self.on_model_changed)
+        self.sub_model_combo.currentTextChanged.connect(self.on_sub_model_changed)
+        self.conflict_combo.currentTextChanged.connect(self.on_conflict_policy_changed)
 
     def setup_connections(self):
         # 批处理线程信号连接
         self.batch_thread.task_progress.connect(self.update_task_progress)
         self.batch_thread.task_error.connect(self.on_task_error)
         self.batch_thread.task_completed.connect(self.on_task_completed)
+
+        # 從設定頁同步模型變更
+        signalBus.transcription_model_changed.connect(self._on_global_model_changed)
 
         # 表格右键菜单
         self.task_table.setContextMenuPolicy(Qt.CustomContextMenu)  # type: ignore
@@ -152,15 +200,63 @@ class BatchProcessInterface(QWidget):
             audio_formats = [f"*.{fmt.value}" for fmt in SupportedAudioFormats]
             video_formats = [f"*.{fmt.value}" for fmt in SupportedVideoFormats]
             formats = audio_formats + video_formats
-            file_filter = f"音视频文件 ({' '.join(formats)})"
+            file_filter = f"{self.tr('音視頻文件')} ({' '.join(formats)})"
         elif task_type == BatchTaskType.SUBTITLE:
             # 获取所有支持的字幕格式
             subtitle_formats = [f"*.{fmt.value}" for fmt in SupportedSubtitleFormats]
-            file_filter = f"字幕文件 ({' '.join(subtitle_formats)})"
+            file_filter = f"{self.tr('字幕文件')} ({' '.join(subtitle_formats)})"
 
-        files, _ = QFileDialog.getOpenFileNames(self, "选择文件", "", file_filter)
+        files, _ = QFileDialog.getOpenFileNames(self, self.tr("選擇文件"), "", file_filter)
         if files:
             self.add_files(files)
+
+    def on_add_folder_clicked(self):
+        try:
+            self._on_add_folder_clicked_impl()
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            InfoBar.error(
+                title="Error",
+                content=str(e),
+                duration=10000,
+                position=InfoBarPosition.TOP,
+                parent=self,
+            )
+
+    def _on_add_folder_clicked_impl(self):
+        folder_path = QFileDialog.getExistingDirectory(self, self.tr("選擇文件夾"), "")
+        if not folder_path:
+            return
+
+        task_type = BatchTaskType(self.task_type_combo.currentText())
+        
+        # 递归扫描文件夹
+        all_files = []
+        for root, _, files in os.walk(folder_path):
+            for file in files:
+                all_files.append(os.path.join(root, file))
+                
+        # 过滤有效文件
+        valid_files = self.filter_files(all_files, task_type)
+        valid_files.sort(key=lambda x: x.lower())
+
+        if not valid_files:
+            InfoBar.warning(
+                title=self.tr("未找到文件"),
+                content=self.tr("該文件夾內沒有找到與當前任務類型匹配的支持文件"),
+                duration=INFOBAR_DURATION_WARNING,
+                position=InfoBarPosition.TOP,
+                parent=self,
+            )
+            return
+
+        # 弹出选择窗口
+        dialog = FolderSelectionDialog(self, valid_files)
+        if dialog.exec():
+            selected_files = dialog.get_selected_files()
+            if selected_files:
+                self.add_files(selected_files)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
@@ -187,8 +283,8 @@ class BatchProcessInterface(QWidget):
         # 如果有不存在的文件，显示警告
         if non_existent_files:
             InfoBar.warning(
-                title="文件不存在",
-                content=f"以下文件不存在：\n{', '.join(non_existent_files)}",
+                title=self.tr("文件不存在"),
+                content=f"{self.tr('以下文件不存在：')}\n{', '.join(non_existent_files)}",
                 duration=INFOBAR_DURATION_WARNING,
                 position=InfoBarPosition.TOP,
                 parent=self,
@@ -388,7 +484,7 @@ class BatchProcessInterface(QWidget):
 
         # 显示开始处理的提示
         InfoBar.success(
-            title=self.tr("开始处理"),
+            title=self.tr("開始處理"),
             content=f"开始处理 {waiting_tasks} 个任务",
             duration=INFOBAR_DURATION_SUCCESS,
             position=InfoBarPosition.TOP,
@@ -407,7 +503,7 @@ class BatchProcessInterface(QWidget):
         # 显示开始处理的提示
         file_name = os.path.basename(file_path)
         InfoBar.success(
-            title=self.tr("开始处理"),
+            title=self.tr("開始處理"),
             content=f"开始处理文件：{file_name}",
             duration=INFOBAR_DURATION_SUCCESS,
             position=InfoBarPosition.TOP,
@@ -442,8 +538,54 @@ class BatchProcessInterface(QWidget):
                 position=InfoBarPosition.BOTTOM,
                 parent=self,
             )
+        # 字幕處理不需要轉錄模型，隱藏模型選擇器
+        is_subtitle = task_type == str(BatchTaskType.SUBTITLE)
+        self.model_combo.setVisible(not is_subtitle)
+        # 子模型也要跟著隱藏
+        if is_subtitle:
+            self.sub_model_combo.setVisible(False)
+        else:
+            self.sub_model_combo.setVisible(
+                self.model_combo.currentText() == TranscribeModelEnum.FASTER_WHISPER.value
+            )
         # 清空当前任务列表
         self.clear_tasks()
+
+    def on_model_changed(self, model_name: str):
+        """批次頁模型選擇變更，同步到全域設定"""
+        for model in TranscribeModelEnum:
+            if model.value == model_name:
+                cfg.set(cfg.transcribe_model, model)
+                break
+        # FasterWhisper 時顯示子模型選擇
+        self.sub_model_combo.setVisible(
+            model_name == TranscribeModelEnum.FASTER_WHISPER.value
+        )
+
+    def on_sub_model_changed(self, sub_model_name: str):
+        """FasterWhisper 子模型變更，同步到全域設定"""
+        for model in FasterWhisperModelEnum:
+            if model.value == sub_model_name:
+                cfg.set(cfg.faster_whisper_model, model)
+                break
+
+    def _on_global_model_changed(self, model_name: str):
+        """從設定頁或轉錄頁同步模型變更"""
+        self.model_combo.blockSignals(True)
+        self.model_combo.setCurrentText(model_name)
+        self.model_combo.blockSignals(False)
+
+    def on_conflict_policy_changed(self, policy_name: str):
+        """檔案衝突處理策略變更"""
+        for policy in FileConflictPolicy:
+            if str(policy) == policy_name:
+                cfg.set(cfg.file_conflict_policy, policy)
+                break
+
+    def on_setting_clicked(self):
+        """显示转录设置对话框"""
+        dialog = TranscriptionSettingDialog(self.window())
+        dialog.exec_()
 
     def closeEvent(self, event):
         self.batch_thread.stop_all()

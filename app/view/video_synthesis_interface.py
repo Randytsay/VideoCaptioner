@@ -77,7 +77,7 @@ class VideoSynthesisInterface(QWidget):
 
         # 添加开始合成按钮到水平布局
         self.synthesize_button = PrimaryPushButton(
-            self.tr("开始合成"), self, icon=FIF.PLAY
+            self.tr("開始合成"), self, icon=FIF.PLAY
         )
         self.synthesize_button.setFixedHeight(34)
         top_layout.addWidget(self.synthesize_button)
@@ -95,9 +95,9 @@ class VideoSynthesisInterface(QWidget):
         self.subtitle_layout.setSpacing(15)
         self.subtitle_label = BodyLabel(self.tr("字幕文件"), self)
         self.subtitle_input = LineEdit(self)
-        self.subtitle_input.setPlaceholderText(self.tr("选择或者拖拽字幕文件"))
+        self.subtitle_input.setPlaceholderText(self.tr("選擇或者拖拽字幕文件"))
         self.subtitle_input.setAcceptDrops(True)  # 启用拖放
-        self.subtitle_button = PushButton(self.tr("浏览"))
+        self.subtitle_button = PushButton(self.tr("瀏覽"))
         self.subtitle_layout.addWidget(self.subtitle_label)
         self.subtitle_layout.addWidget(self.subtitle_input)
         self.subtitle_layout.addWidget(self.subtitle_button)
@@ -106,11 +106,11 @@ class VideoSynthesisInterface(QWidget):
         # 视频文件选择
         self.video_layout = QHBoxLayout()
         self.video_layout.setSpacing(15)
-        self.video_label = BodyLabel(self.tr("视频文件"), self)
+        self.video_label = BodyLabel(self.tr("視頻文件"), self)
         self.video_input = LineEdit(self)
-        self.video_input.setPlaceholderText(self.tr("选择或者拖拽视频文件"))
+        self.video_input.setPlaceholderText(self.tr("選擇或者拖拽視頻文件"))
         self.video_input.setAcceptDrops(True)  # 启用拖放
-        self.video_button = PushButton(self.tr("浏览"))
+        self.video_button = PushButton(self.tr("瀏覽"))
         self.video_layout.addWidget(self.video_label)
         self.video_layout.addWidget(self.video_input)
         self.video_layout.addWidget(self.video_button)
@@ -123,7 +123,7 @@ class VideoSynthesisInterface(QWidget):
         # 底部进度条和状态信息
         self.bottom_layout = QHBoxLayout()
         self.progress_bar = ProgressBar(self)
-        self.status_label = BodyLabel(self.tr("就绪"), self)
+        self.status_label = BodyLabel(self.tr("就緒"), self)
         self.status_label.setMinimumWidth(100)  # 设置最小宽度
         self.status_label.setAlignment(Qt.AlignCenter)  # type: ignore  # 设置文本居中对齐
         self.bottom_layout.addWidget(self.progress_bar, 1)  # 进度条使用剩余空间
@@ -135,11 +135,11 @@ class VideoSynthesisInterface(QWidget):
         # 添加软字幕选项
         self.soft_subtitle_action = Action(
             FIF.FONT,
-            self.tr("软字幕"),
+            self.tr("軟字幕"),
             triggered=self.on_soft_subtitle_action_triggered,
             checkable=True,
         )
-        self.soft_subtitle_action.setToolTip(self.tr("使用软字幕嵌入视频"))
+        self.soft_subtitle_action.setToolTip(self.tr("使用軟字幕嵌入視頻"))
         self.command_bar.addAction(self.soft_subtitle_action)
 
         # 添加分隔符
@@ -148,11 +148,11 @@ class VideoSynthesisInterface(QWidget):
         # 添加使用样式开关
         self.use_style_action = Action(
             FIF.PALETTE,
-            self.tr("使用样式"),
+            self.tr("使用樣式"),
             triggered=self.on_use_style_action_triggered,
             checkable=True,
         )
-        self.use_style_action.setToolTip(self.tr("启用字幕样式渲染"))
+        self.use_style_action.setToolTip(self.tr("啓用字幕樣式渲染"))
         self.command_bar.addAction(self.use_style_action)
 
         self.command_bar.addSeparator()
@@ -177,7 +177,7 @@ class VideoSynthesisInterface(QWidget):
 
         # 添加视频质量选择下拉按钮
         self.video_quality_button = TransparentDropDownPushButton(
-            self.tr("视频质量"), self, FIF.SPEED_HIGH
+            self.tr("視頻質量"), self, FIF.SPEED_HIGH
         )
         self.video_quality_button.setFixedHeight(34)
         self.video_quality_button.setMinimumWidth(125)
@@ -197,18 +197,18 @@ class VideoSynthesisInterface(QWidget):
         # 添加是否合成视频选项
         self.need_video_action = Action(
             FIF.VIDEO,
-            self.tr("合成视频"),
+            self.tr("合成視頻"),
             triggered=self.on_need_video_action_triggered,
             checkable=True,
         )
-        self.need_video_action.setToolTip(self.tr("是否生成新的视频文件"))
+        self.need_video_action.setToolTip(self.tr("是否生成新的視頻文件"))
         self.command_bar.addAction(self.need_video_action)
 
         self.command_bar.addSeparator()
 
         # 添加打开文件夹按钮
         folder_action = Action(FIF.FOLDER, "", triggered=self.open_video_folder)
-        folder_action.setToolTip(self.tr("打开输出文件夹"))
+        folder_action.setToolTip(self.tr("打開輸出文件夾"))
         self.command_bar.addAction(folder_action)
 
     def setup_style(self):
@@ -294,16 +294,16 @@ class VideoSynthesisInterface(QWidget):
                 cfg.set(cfg.use_subtitle_style, False)
                 self._update_style_controls_state()
             InfoBar.info(
-                self.tr("开启软字幕"),
-                self.tr("字幕作为独立轨道嵌入视频，不包含字幕样式"),
+                self.tr("開啓軟字幕"),
+                self.tr("字幕作為獨立軌道嵌入視頻，不包含字幕樣式"),
                 duration=3000,
                 position=InfoBarPosition.BOTTOM,
                 parent=self,
             )
         else:
             InfoBar.info(
-                self.tr("开启硬烧录字幕"),
-                self.tr("字幕直接烧录到视频画面中，包含字幕样式"),
+                self.tr("開啓硬燒錄字幕"),
+                self.tr("字幕直接燒錄到視頻畫面中，包含字幕樣式"),
                 duration=3000,
                 position=InfoBarPosition.BOTTOM,
                 parent=self,
@@ -321,16 +321,16 @@ class VideoSynthesisInterface(QWidget):
         # 显示说明信息
         if checked:
             InfoBar.info(
-                self.tr("开启视频合成"),
-                self.tr("将进行视频与字幕的合成操作"),
+                self.tr("開啓視頻合成"),
+                self.tr("將進行視頻與字幕的合成操作"),
                 duration=3000,
                 position=InfoBarPosition.BOTTOM,
                 parent=self,
             )
         else:
             InfoBar.info(
-                self.tr("关闭视频合成"),
-                self.tr("仅生成字幕文件，不生成新的视频文件"),
+                self.tr("關閉視頻合成"),
+                self.tr("僅生成字幕文件，不生成新的視頻文件"),
                 duration=3000,
                 position=InfoBarPosition.BOTTOM,
                 parent=self,
@@ -371,16 +371,16 @@ class VideoSynthesisInterface(QWidget):
                 self.soft_subtitle_action.setChecked(False)
                 cfg.set(cfg.soft_subtitle, False)
             InfoBar.info(
-                self.tr("启用字幕样式"),
-                self.tr("已自动切换为硬字幕渲染"),
+                self.tr("啓用字幕樣式"),
+                self.tr("已自動切換為硬字幕渲染"),
                 duration=3000,
                 position=InfoBarPosition.BOTTOM,
                 parent=self,
             )
         else:
             InfoBar.info(
-                self.tr("关闭字幕样式"),
-                self.tr("将使用默认字幕渲染"),
+                self.tr("關閉字幕樣式"),
+                self.tr("將使用默認字幕渲染"),
                 duration=3000,
                 position=InfoBarPosition.BOTTOM,
                 parent=self,
@@ -434,7 +434,7 @@ class VideoSynthesisInterface(QWidget):
         filter_str = f"{self.tr('字幕文件')} ({subtitle_formats})"
 
         file_path, _ = QFileDialog.getOpenFileName(
-            self, self.tr("选择字幕文件"), "", filter_str
+            self, self.tr("選擇字幕文件"), "", filter_str
         )
         if file_path:
             self.subtitle_input.setText(file_path)
@@ -442,10 +442,10 @@ class VideoSynthesisInterface(QWidget):
     def choose_video_file(self):
         # 构建文件过滤器
         video_formats = " ".join(f"*.{fmt.value}" for fmt in SupportedVideoFormats)
-        filter_str = f"{self.tr('视频文件')} ({video_formats})"
+        filter_str = f"{self.tr('視頻文件')} ({video_formats})"
 
         file_path, _ = QFileDialog.getOpenFileName(
-            self, self.tr("选择视频文件"), "", filter_str
+            self, self.tr("選擇視頻文件"), "", filter_str
         )
         if file_path:
             self.video_input.setText(file_path)
@@ -455,8 +455,8 @@ class VideoSynthesisInterface(QWidget):
         video_file = self.video_input.text()
         if not subtitle_file or not video_file:
             InfoBar.error(
-                self.tr("错误"),
-                self.tr("请选择字幕文件和视频文件"),
+                self.tr("錯誤"),
+                self.tr("請選擇字幕文件和視頻文件"),
                 duration=INFOBAR_DURATION_ERROR,
                 position=InfoBarPosition.TOP,
                 parent=self,
@@ -502,7 +502,7 @@ class VideoSynthesisInterface(QWidget):
         self.open_video_folder()
         InfoBar.success(
             self.tr("成功"),
-            self.tr("视频合成已完成"),
+            self.tr("視頻合成已完成"),
             duration=INFOBAR_DURATION_SUCCESS,
             position=InfoBarPosition.TOP,
             parent=self,
@@ -516,7 +516,7 @@ class VideoSynthesisInterface(QWidget):
         self.synthesize_button.setEnabled(True)
         self.progress_bar.error()
         InfoBar.error(
-            self.tr("错误"),
+            self.tr("錯誤"),
             str(error),
             duration=INFOBAR_DURATION_ERROR,
             position=InfoBarPosition.TOP,
@@ -540,7 +540,7 @@ class VideoSynthesisInterface(QWidget):
         else:
             InfoBar.warning(
                 self.tr("警告"),
-                self.tr("没有可用的视频文件夹"),
+                self.tr("沒有可用的視頻文件夾"),
                 duration=INFOBAR_DURATION_WARNING,
                 position=InfoBarPosition.TOP,
                 parent=self,
@@ -563,8 +563,8 @@ class VideoSynthesisInterface(QWidget):
             if file_ext in {fmt.value for fmt in SupportedSubtitleFormats}:
                 self.subtitle_input.setText(file_path)
                 InfoBar.success(
-                    self.tr("导入成功"),
-                    self.tr("字幕文件已放入输入框"),
+                    self.tr("導入成功"),
+                    self.tr("字幕文件已放入輸入框"),
                     duration=INFOBAR_DURATION_SUCCESS,
                     parent=self,
                 )
@@ -572,16 +572,16 @@ class VideoSynthesisInterface(QWidget):
             elif file_ext in {fmt.value for fmt in SupportedVideoFormats}:
                 self.video_input.setText(file_path)
                 InfoBar.success(
-                    self.tr("导入成功"),
-                    self.tr("视频文件已输入框"),
+                    self.tr("導入成功"),
+                    self.tr("視頻文件已輸入框"),
                     duration=INFOBAR_DURATION_SUCCESS,
                     parent=self,
                 )
                 break
             else:
                 InfoBar.error(
-                    self.tr("格式错误") + file_ext,
-                    self.tr("请拖入视频或者字幕文件"),
+                    self.tr("格式錯誤") + file_ext,
+                    self.tr("請拖入視頻或者字幕文件"),
                     duration=INFOBAR_DURATION_ERROR,
                     parent=self,
                 )

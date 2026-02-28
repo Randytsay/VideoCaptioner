@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -163,6 +164,13 @@ class UnzipThread(QThread):
 
     def run(self):
         try:
+            # 檢查 7z 是否存在
+            if not shutil.which("7z"):
+                raise RuntimeError(
+                    "系統未偵測到 7z 執行指令，無法自動解壓程式包。\n"
+                    "請先安裝 7-Zip 並加入系統環境變數，或手動將該 .7z 檔案解壓縮到同目錄下的 Faster-Whisper-XXL 資料夾中。"
+                )
+
             subprocess.run(
                 ["7z", "x", self.zip_file, f"-o{self.extract_path}", "-y"],
                 check=True,
@@ -172,7 +180,7 @@ class UnzipThread(QThread):
             os.remove(self.zip_file)
             self.finished.emit()
         except subprocess.CalledProcessError as e:
-            self.error.emit(f"解压失败: {str(e)}")
+            self.error.emit(f"解壓失敗 (7z 報錯): {str(e)}")
         except Exception as e:
             self.error.emit(str(e))
 
@@ -201,7 +209,7 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
         self._setup_progress_section(layout)
 
         self.viewLayout.addLayout(layout)
-        self.cancelButton.setText(self.tr("关闭"))
+        self.cancelButton.setText(self.tr("關閉"))
         self.yesButton.hide()
 
     def _setup_program_section(self, layout):
@@ -210,11 +218,11 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
         title_layout = QHBoxLayout()
 
         # 标题
-        faster_whisper_title = SubtitleLabel(self.tr("Faster Whisper 下载"), self)
+        faster_whisper_title = SubtitleLabel(self.tr("Faster Whisper 下載"), self)
         title_layout.addWidget(faster_whisper_title)
 
         # 添加打开文件夹按钮
-        open_folder_btn = HyperlinkButton("", self.tr("打开程序文件夹"), parent=self)
+        open_folder_btn = HyperlinkButton("", self.tr("打開程序文件夾"), parent=self)
         open_folder_btn.setIcon(FIF.FOLDER)
         open_folder_btn.clicked.connect(self._open_program_folder)
         title_layout.addStretch()
@@ -235,10 +243,10 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
 
             # 添加说明标签
             if len(installed_versions) == 1:
-                desc_label = BodyLabel(self.tr("您可以继续下载其他版本:"), self)
+                desc_label = BodyLabel(self.tr("您可以繼續下載其他版本:"), self)
                 layout.addWidget(desc_label)
         else:
-            desc_label = BodyLabel(self.tr("未下载Faster Whisper 程序"), self)
+            desc_label = BodyLabel(self.tr("未下載Faster Whisper 程序"), self)
             layout.addWidget(desc_label)
 
         # 下载控件
@@ -256,7 +264,7 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
         # 如果还有可下载的版本，显示下载控件
         if self.program_combo.count() > 0:
             self.program_combo.show()
-            self.program_download_btn = PushButton(self.tr("下载程序"), self)
+            self.program_download_btn = PushButton(self.tr("下載程序"), self)
             self.program_download_btn.clicked.connect(self._start_download)
             program_layout.addWidget(self.program_combo)
             program_layout.addWidget(self.program_download_btn)
@@ -269,11 +277,11 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
         title_layout = QHBoxLayout()
 
         # 标题
-        model_title = SubtitleLabel(self.tr("模型下载"), self)
+        model_title = SubtitleLabel(self.tr("模型下載"), self)
         title_layout.addWidget(model_title)
 
         # 添加打开文件夹按钮
-        open_folder_btn = HyperlinkButton("", self.tr("打开模型文件夹"), parent=self)
+        open_folder_btn = HyperlinkButton("", self.tr("打開模型文件夾"), parent=self)
         open_folder_btn.setIcon(FIF.FOLDER)
         open_folder_btn.clicked.connect(self._open_model_folder)
         title_layout.addStretch()
@@ -294,7 +302,7 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
         table.setSelectionMode(TableWidget.NoSelection)
         table.setColumnCount(4)
         table.setHorizontalHeaderLabels(
-            [self.tr("模型名称"), self.tr("大小"), self.tr("状态"), self.tr("操作")]
+            [self.tr("模型名稱"), self.tr("大小"), self.tr("狀態"), self.tr("操作")]
         )
 
         # 设置表格样式
@@ -359,7 +367,7 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
         is_downloaded = os.path.exists(model_bin_path)
 
         status_item = QTableWidgetItem(
-            self.tr("已下载") if is_downloaded else self.tr("未下载")
+            self.tr("已下載") if is_downloaded else self.tr("未下載")
         )
         if is_downloaded:
             status_item.setForeground(Qt.green)  # type: ignore
@@ -373,7 +381,7 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
 
         download_btn = HyperlinkButton(
             "",
-            self.tr("重新下载") if is_downloaded else self.tr("下载"),
+            self.tr("重新下載") if is_downloaded else self.tr("下載"),
             parent=self,
         )
         download_btn.setIcon(FIF.DOWNLOAD)
@@ -392,8 +400,8 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
         """开始下载"""
         if FasterWhisperDownloadDialog.is_downloading:
             InfoBar.warning(
-                self.tr("下载进行中"),
-                self.tr("请等待当前下载任务完成"),
+                self.tr("下載進行中"),
+                self.tr("請等待當前下載任務完成"),
                 duration=3000,
                 parent=self,
             )
@@ -416,8 +424,8 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
 
         if not program:
             InfoBar.error(
-                self.tr("下载错误"),
-                self.tr("未找到对应的程序配置"),
+                self.tr("下載錯誤"),
+                self.tr("未找到對應的程序配置"),
                 duration=3000,
                 parent=self,
             )
@@ -463,7 +471,7 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
                 self._finish_program_installation()
             else:
                 # GPU 版本需要解压
-                self.progress_label.setText(self.tr("正在解压文件..."))
+                self.progress_label.setText(self.tr("正在解壓文件..."))
 
                 # 创建并启动解压线程
                 self.unzip_thread = UnzipThread(save_path, BIN_PATH)
@@ -473,12 +481,12 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
                 return  # 提前返回,等待解压完成
 
         except Exception as e:
-            InfoBar.error(self.tr("安装失败"), str(e), duration=3000, parent=self)
+            InfoBar.error(self.tr("安裝失敗"), str(e), duration=3000, parent=self)
             self._cleanup_installation()
 
     def _on_program_download_error(self, error):
         """程序下载错误处理"""
-        InfoBar.error(self.tr("下载失败"), error, duration=3000, parent=self)
+        InfoBar.error(self.tr("下載失敗"), error, duration=3000, parent=self)
         FasterWhisperDownloadDialog.is_downloading = False
         self._set_all_download_buttons_enabled(True)
         self.program_download_btn.setEnabled(True)
@@ -504,8 +512,8 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
         """下载选中的模型"""
         if FasterWhisperDownloadDialog.is_downloading:
             InfoBar.warning(
-                self.tr("下载进行中"),
-                self.tr("请等待当前下载任务完成"),
+                self.tr("下載進行中"),
+                self.tr("請等待當前下載任務完成"),
                 duration=3000,
                 parent=self,
             )
@@ -538,14 +546,14 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
             FasterWhisperDownloadDialog.is_downloading = False
             self._set_all_download_buttons_enabled(True)
             # 更新状态
-            status_item = QTableWidgetItem(self.tr("已下载"))
+            status_item = QTableWidgetItem(self.tr("已下載"))
             status_item.setForeground(Qt.green)  # type: ignore
             status_item.setTextAlignment(Qt.AlignCenter)  # type: ignore
             self.model_table.setItem(row, 2, status_item)
 
             # 更新下载按钮文本
             if download_btn:
-                download_btn.setText(self.tr("重新下载"))
+                download_btn.setText(self.tr("重新下載"))
                 download_btn.setEnabled(True)
 
             model = FASTER_WHISPER_MODELS[row]
@@ -581,7 +589,7 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
                     combo.setCurrentIndex(0)
 
             InfoBar.success(
-                self.tr("下载成功"),
+                self.tr("下載成功"),
                 self.tr(f"{model['label']} 模型已下载完成"),
                 duration=3000,
                 parent=self,
@@ -595,7 +603,7 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
             if download_btn:
                 download_btn.setEnabled(True)
 
-            InfoBar.error(self.tr("下载失败"), str(error), duration=3000, parent=self)
+            InfoBar.error(self.tr("下載失敗"), str(error), duration=3000, parent=self)
             self.progress_bar.hide()
             self.progress_label.hide()
 
@@ -634,8 +642,8 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
     def _finish_program_installation(self):
         """完成程序安装"""
         InfoBar.success(
-            self.tr("安装完成"),
-            self.tr("Faster Whisper 程序已安装成功"),
+            self.tr("安裝完成"),
+            self.tr("Faster Whisper 程序已安裝成功"),
             duration=3000,
             parent=self,
         )
@@ -644,7 +652,7 @@ class FasterWhisperDownloadDialog(MessageBoxBase):
 
     def _on_unzip_error(self, error_msg):
         """处理解压错误"""
-        InfoBar.error(self.tr("安装失败"), error_msg, duration=3000, parent=self)
+        InfoBar.error(self.tr("安裝失敗"), error_msg, duration=3000, parent=self)
         self._cleanup_installation()
 
     def _cleanup_installation(self):
@@ -666,7 +674,7 @@ class FasterWhisperSettingWidget(QWidget):
         # 检查Faster Whisper模型是否存在
         is_faster_whisper_exists, _ = check_faster_whisper_exists()
         if not is_faster_whisper_exists:
-            self.show_error_info(self.tr("Faster Whisper程序不存在，请先下载程序"))
+            self.show_error_info(self.tr("Faster Whisper程序不存在，請先下載程序"))
             self._show_model_manager()
         return
 
@@ -684,7 +692,7 @@ class FasterWhisperSettingWidget(QWidget):
         self.containerLayout = QVBoxLayout(self.container)
 
         self.setting_group = SettingCardGroup(
-            self.tr("Faster Whisper 设置"), self
+            self.tr("Faster Whisper 設置"), self
         )
 
         # 模型选择
@@ -692,7 +700,7 @@ class FasterWhisperSettingWidget(QWidget):
             cfg.faster_whisper_model,
             FIF.ROBOT,
             self.tr("模型"),
-            self.tr("选择 Faster Whisper 模型"),
+            self.tr("選擇 Faster Whisper 模型"),
             [model.value for model in FasterWhisperModelEnum],
             self.setting_group,
         )
@@ -721,7 +729,7 @@ class FasterWhisperSettingWidget(QWidget):
             self.tr("管理模型"),
             FIF.DOWNLOAD,  # 使用下载图标
             self.tr("模型管理"),
-            self.tr("下载或更新 Faster Whisper 模型"),
+            self.tr("下載或更新 Faster Whisper 模型"),
             self.setting_group,  # 添加到设置组
         )
 
@@ -729,8 +737,8 @@ class FasterWhisperSettingWidget(QWidget):
         self.language_card = ComboBoxSettingCard(
             cfg.transcribe_language,
             FIF.LANGUAGE,
-            self.tr("源语言"),
-            self.tr("音视频中说话的语言，默认根据前30秒自动识别"),
+            self.tr("源語言"),
+            self.tr("音視頻中説話的語言，默認根據前30秒自動識別"),
             [lang.value for lang in TranscribeLanguageEnum],
             self.setting_group,
         )
@@ -740,8 +748,8 @@ class FasterWhisperSettingWidget(QWidget):
         self.device_card = ComboBoxSettingCard(
             cfg.faster_whisper_device,
             FIF.IOT,
-            self.tr("运行设备"),
-            self.tr("模型运行设备"),
+            self.tr("運行設備"),
+            self.tr("模型運行設備"),
             ["cuda", "cpu"],
             self.setting_group,
         )
@@ -750,13 +758,13 @@ class FasterWhisperSettingWidget(QWidget):
         #     self.device_card.comboBox.removeItem(0)
 
         # VAD设置组
-        self.vad_group = SettingCardGroup(self.tr("VAD设置"), self)
+        self.vad_group = SettingCardGroup(self.tr("VAD設置"), self)
 
         # VAD过滤开关
         self.vad_filter_card = SwitchSettingCard(
             FIF.CHECKBOX,
-            self.tr("VAD过滤"),
-            self.tr("过滤无人声语音片断，减少幻觉"),
+            self.tr("VAD過濾"),
+            self.tr("過濾無人聲語音片斷，減少幻覺"),
             cfg.faster_whisper_vad_filter,
             self.vad_group,
         )
@@ -765,8 +773,8 @@ class FasterWhisperSettingWidget(QWidget):
         self.vad_threshold_card = DoubleSpinBoxSettingCard(
             cfg.faster_whisper_vad_threshold,
             FIF.VOLUME,  # type: ignore
-            self.tr("VAD阈值"),
-            self.tr("语音概率阈值，高于此值视为语音"),
+            self.tr("VAD閾值"),
+            self.tr("語音概率閾值，高於此值視為語音"),
             minimum=0.00,
             maximum=1.00,
             decimals=2,
@@ -778,19 +786,19 @@ class FasterWhisperSettingWidget(QWidget):
             cfg.faster_whisper_vad_method,
             FIF.MUSIC,
             self.tr("VAD方法"),
-            self.tr("选择VAD检测方法"),
+            self.tr("選擇VAD檢測方法"),
             [method.value for method in VadMethodEnum],
             self.vad_group,
         )
 
         # 其他设置组
-        self.other_group = SettingCardGroup(self.tr("其他设置"), self)
+        self.other_group = SettingCardGroup(self.tr("其他設置"), self)
 
         # 音频降噪
         self.ff_mdx_kim2_card = SwitchSettingCard(
             FIF.MUSIC,
-            self.tr("人声分离"),
-            self.tr("处理前使用MDX-Net降噪，分离人声和背景音乐"),
+            self.tr("人聲分離"),
+            self.tr("處理前使用MDX-Net降噪，分離人聲和背景音樂"),
             cfg.faster_whisper_ff_mdx_kim2,
             self.other_group,
         )
@@ -798,8 +806,8 @@ class FasterWhisperSettingWidget(QWidget):
         # 单词时间戳
         self.one_word_card = SwitchSettingCard(
             FIF.UNIT,
-            self.tr("单字时间戳"),
-            self.tr("开启生成单字级时间戳；关闭后使用原始分段断句"),
+            self.tr("單字時間戳"),
+            self.tr("開啓生成單字級時間戳；關閉後使用原始分段斷句"),
             cfg.faster_whisper_one_word,
             self.other_group,
         )
@@ -808,8 +816,8 @@ class FasterWhisperSettingWidget(QWidget):
         self.prompt_card = LineEditSettingCard(
             cfg.faster_whisper_prompt,
             FIF.CHAT,
-            self.tr("提示词"),
-            self.tr("可选的提示词,默认空"),
+            self.tr("提示詞"),
+            self.tr("可選的提示詞,默認空"),
             "",
             self.other_group,
         )
@@ -868,7 +876,7 @@ class FasterWhisperSettingWidget(QWidget):
     def show_error_info(self, error_msg):
         """显示错误信息"""
         InfoBar.error(
-            title=self.tr("错误"),
+            title=self.tr("錯誤"),
             content=error_msg,
             parent=self.window(),
             duration=5000,
@@ -884,7 +892,7 @@ class FasterWhisperSettingWidget(QWidget):
         # 检查程序是否存在
         has_program, _ = check_faster_whisper_exists()
         if not has_program:
-            self.show_error_info(self.tr("Faster Whisper程序不存在，请先下载程序"))
+            self.show_error_info(self.tr("Faster Whisper程序不存在，請先下載程序"))
             return False
 
         model_value = cfg.faster_whisper_model.value.value

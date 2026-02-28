@@ -130,6 +130,7 @@ class TranslatorServiceEnum(Enum):
     DEEPLX = "DeepLx 翻译"
     BING = "微软翻译"
     GOOGLE = "谷歌翻译"
+    OPENCC = "OpenCC 簡繁轉換 (離線)"
 
 
 class VadMethodEnum(Enum):
@@ -140,10 +141,10 @@ class VadMethodEnum(Enum):
         "silero_v4"  # 与 silero_v4_fw 相同。运行原始 Silero 的代码，而不是适配过的代码
     )
     SILERO_V5 = (
-        "silero_v5"  # 与 silero_v5_fw 相同。运行原始 Silero 的代码，而不是适配过的代码)
+        "silero_v5"  # 最新推薦版本，顯著減少幻覺且速度更快
     )
     SILERO_V4_FW = (
-        "silero_v4_fw"  # 默认模型。最准确的 Silero 版本，有一些非致命的小问题
+        "silero_v4_fw"  # 默認模型。最準確的 Silero 版本，有一些非致命的小問題
     )
     # SILERO_V5_FW = "silero_v5_fw"  # 准确性差。不是 VAD，而是某种语音的随机检测器，有各种致命的小问题。避免使用！
     PYANNOTE_V3 = "pyannote_v3"  # 最佳准确性，支持 CUDA
@@ -350,18 +351,18 @@ class FasterWhisperModelEnum(Enum):
 
 
 LANGUAGES = {
-    "自动检测": "",
-    "英语": "en",
+    "自動檢測": "",
+    "英語": "en",
     "中文": "zh",
     "日本語": "ja",
-    "德语": "de",
-    "粤语": "yue",
-    "西班牙语": "es",
-    "俄语": "ru",
-    "韩语": "ko",
-    "法语": "fr",
-    "葡萄牙语": "pt",
-    "土耳其语": "tr",
+    "德語": "de",
+    "粵語": "yue",
+    "西班牙語": "es",
+    "俄語": "ru",
+    "韓語": "ko",
+    "法語": "fr",
+    "葡萄牙語": "pt",
+    "土耳其語": "tr",
     "English": "en",
     "Chinese": "zh",
     "German": "de",
@@ -554,7 +555,7 @@ class TranscribeConfig:
     transcribe_model: Optional[TranscribeModelEnum] = None
     transcribe_language: str = ""
     need_word_time_stamp: bool = True
-    output_format: Optional[TranscribeOutputFormatEnum] = None
+    output_formats: list[str] = field(default_factory=list)
     # Whisper Cpp 配置
     whisper_model: Optional[WhisperModelEnum] = None
     # Whisper API 配置
@@ -589,7 +590,7 @@ class TranscribeConfig:
         lines.append(f"Language: {self.transcribe_language or 'Auto'}")
         lines.append(f"Word Timestamp: {self.need_word_time_stamp}")
         lines.append(
-            f"Output Format: {self.output_format.value if self.output_format else 'None'}"
+            f"Output Formats: {', '.join(self.output_formats) if self.output_formats else 'None'}"
         )
 
         if self.transcribe_model == TranscribeModelEnum.WHISPER_API:
@@ -836,24 +837,35 @@ class FullProcessTask:
 
 
 class BatchTaskType(Enum):
-    """批量处理任务类型"""
+    """批量處理任務類型"""
 
-    TRANSCRIBE = "批量转录"
+    TRANSCRIBE = "批量轉錄"
     SUBTITLE = "批量字幕"
-    TRANS_SUB = "转录+字幕"
-    FULL_PROCESS = "全流程处理"
+    TRANS_SUB = "轉錄+字幕"
+    FULL_PROCESS = "全流程處理"
 
     def __str__(self):
         return self.value
 
 
 class BatchTaskStatus(Enum):
-    """批量处理任务状态"""
+    """批量處理任務狀態"""
 
     WAITING = "等待中"
-    RUNNING = "处理中"
+    RUNNING = "處理中"
     COMPLETED = "已完成"
-    FAILED = "失败"
+    FAILED = "失敗"
+
+    def __str__(self):
+        return self.value
+
+
+class FileConflictPolicy(Enum):
+    """檔案衝突處理策略"""
+
+    OVERWRITE = "覆蓋"
+    RENAME = "重命名"
+    SKIP = "跳過"
 
     def __str__(self):
         return self.value

@@ -44,7 +44,7 @@ class LogDetailDialog(MessageBoxBase):
         self._setup_ui()
 
     def _setup_ui(self):
-        self.titleLabel = SubtitleLabel(self.tr("请求详情"))
+        self.titleLabel = SubtitleLabel(self.tr("請求詳情"))
         self.viewLayout.addWidget(self.titleLabel)
 
         # 提取信息
@@ -105,14 +105,14 @@ class LogDetailDialog(MessageBoxBase):
         self.viewLayout.addWidget(self.response_edit)
 
         # 底部按钮：替换默认按钮
-        self.yesButton.setText(self.tr("关闭"))
+        self.yesButton.setText(self.tr("關閉"))
         self.cancelButton.hide()  # type: ignore
 
-        copy_req_btn = PushButton(FIF.COPY, self.tr("复制请求"))
+        copy_req_btn = PushButton(FIF.COPY, self.tr("複製請求"))
         copy_req_btn.clicked.connect(self._copy_request)
         self.buttonLayout.insertWidget(0, copy_req_btn)  # type: ignore
 
-        copy_resp_btn = PushButton(FIF.COPY, self.tr("复制响应"))
+        copy_resp_btn = PushButton(FIF.COPY, self.tr("複製響應"))
         copy_resp_btn.clicked.connect(self._copy_response)
         self.buttonLayout.insertWidget(1, copy_resp_btn)  # type: ignore
 
@@ -127,7 +127,7 @@ class LogDetailDialog(MessageBoxBase):
             clipboard.setText(text)
         InfoBar.success(
             title="",
-            content=self.tr("已复制"),
+            content=self.tr("已複製"),
             parent=self,
             position=InfoBarPosition.TOP,
             duration=1500,
@@ -142,7 +142,7 @@ class LogDetailDialog(MessageBoxBase):
             clipboard.setText(text)
         InfoBar.success(
             title="",
-            content=self.tr("已复制"),
+            content=self.tr("已複製"),
             parent=self,
             position=InfoBarPosition.TOP,
             duration=1500,
@@ -155,7 +155,7 @@ class LLMLogsInterface(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("llmLogsInterface")
-        self.setWindowTitle(self.tr("LLM 请求日志"))
+        self.setWindowTitle(self.tr("LLM 請求日誌"))
 
         self.all_logs: List[Dict[str, Any]] = []
         self.filtered_logs: List[Dict[str, Any]] = []
@@ -180,7 +180,7 @@ class LLMLogsInterface(QWidget):
         toolbar.setSpacing(10)
 
         self.search_edit = SearchLineEdit()
-        self.search_edit.setPlaceholderText(self.tr("搜索任务ID、文件名、模型..."))
+        self.search_edit.setPlaceholderText(self.tr("搜索任務ID、文件名、模型..."))
         self.search_edit.setFixedWidth(280)
         toolbar.addWidget(self.search_edit)
 
@@ -189,7 +189,7 @@ class LLMLogsInterface(QWidget):
         self.refresh_btn = PushButton(FIF.SYNC, self.tr("刷新"))
         toolbar.addWidget(self.refresh_btn)
 
-        self.clear_btn = PushButton(FIF.DELETE, self.tr("清空日志"))
+        self.clear_btn = PushButton(FIF.DELETE, self.tr("清空日誌"))
         toolbar.addWidget(self.clear_btn)
 
         self.main_layout.addLayout(toolbar)
@@ -199,12 +199,12 @@ class LLMLogsInterface(QWidget):
         self.table.setColumnCount(7)
         self.table.setHorizontalHeaderLabels(
             [
-                self.tr("时间"),
-                self.tr("任务ID"),
+                self.tr("時間"),
+                self.tr("任務ID"),
                 self.tr("文件"),
-                self.tr("阶段"),
+                self.tr("階段"),
                 self.tr("模型"),
-                self.tr("耗时"),
+                self.tr("耗時"),
                 self.tr("Tokens"),
             ]
         )
@@ -247,11 +247,11 @@ class LLMLogsInterface(QWidget):
         footer.setSpacing(15)
 
         # 记录数
-        self.status_label = BodyLabel(self.tr("共 0 条"))
+        self.status_label = BodyLabel(self.tr("共 0 條"))
         footer.addWidget(self.status_label)
 
         # 双击提示
-        hint_label = CaptionLabel(self.tr("双击查看详情"))
+        hint_label = CaptionLabel(self.tr("雙擊查看詳情"))
         hint_label.setStyleSheet("color: gray;")
         footer.addWidget(hint_label)
 
@@ -332,7 +332,7 @@ class LLMLogsInterface(QWidget):
                             continue
         except Exception as e:
             InfoBar.error(
-                title=self.tr("错误"),
+                title=self.tr("錯誤"),
                 content=str(e),
                 parent=self,
                 position=InfoBarPosition.TOP,
@@ -455,8 +455,8 @@ class LLMLogsInterface(QWidget):
     def _clear_logs(self):
         """清空日志"""
         w = MessageBox(
-            self.tr("确认清空"),
-            self.tr("确定要清空所有日志吗？此操作不可恢复。"),
+            self.tr("確認清空"),
+            self.tr("確定要清空所有日誌嗎？此操作不可恢復。"),
             self,
         )
         if w.exec():
@@ -468,14 +468,14 @@ class LLMLogsInterface(QWidget):
                 self._update_table()
                 InfoBar.success(
                     title="",
-                    content=self.tr("日志已清空"),
+                    content=self.tr("日誌已清空"),
                     parent=self,
                     position=InfoBarPosition.TOP,
                     duration=2000,
                 )
             except Exception as e:
                 InfoBar.error(
-                    title=self.tr("错误"),
+                    title=self.tr("錯誤"),
                     content=str(e),
                     parent=self,
                     position=InfoBarPosition.TOP,

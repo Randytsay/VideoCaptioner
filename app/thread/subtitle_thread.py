@@ -59,7 +59,7 @@ class SubtitleThread(QThread):
                 self.task.subtitle_config.llm_model,
             )
             if not success:
-                raise Exception(f"{self.tr('LLM API 测试失败: ')}{message or ''}")
+                raise Exception(f"{self.tr('LLM API 測試失敗: ')}{message or ''}")
             # 设置环境变量
             if self.task.subtitle_config.base_url:
                 os.environ["OPENAI_BASE_URL"] = self.task.subtitle_config.base_url
@@ -67,7 +67,7 @@ class SubtitleThread(QThread):
                 os.environ["OPENAI_API_KEY"] = self.task.subtitle_config.api_key
             return self.task.subtitle_config
         else:
-            raise Exception(self.tr("LLM API 未配置, 请检查LLM配置"))
+            raise Exception(self.tr("LLM API 未配置, 請檢查LLM配置"))
 
     def run(self):
         # 设置任务上下文
@@ -85,10 +85,10 @@ class SubtitleThread(QThread):
 
             # 字幕文件路径检查、对断句字幕路径进行定义
             subtitle_path = self.task.subtitle_path
-            assert subtitle_path is not None, self.tr("字幕文件路径为空")
+            assert subtitle_path is not None, self.tr("字幕文件路徑為空")
 
             subtitle_config = self.task.subtitle_config
-            assert subtitle_config is not None, self.tr("字幕配置为空")
+            assert subtitle_config is not None, self.tr("字幕配置為空")
 
             asr_data = ASRData.from_subtitle_file(subtitle_path)
 
@@ -99,13 +99,13 @@ class SubtitleThread(QThread):
 
             # 验证 LLM 配置
             if self.need_llm(subtitle_config, asr_data):
-                self.progress.emit(2, self.tr("开始验证 LLM 配置..."))
+                self.progress.emit(2, self.tr("開始驗證 LLM 配置..."))
                 subtitle_config = self._setup_llm_config()
 
             # 2. 重新断句（对于字词级字幕）
             if asr_data.is_word_timestamp():
                 update_stage("split")
-                self.progress.emit(5, self.tr("字幕断句..."))
+                self.progress.emit(5, self.tr("字幕斷句..."))
                 logger.info("正在字幕断句...")
                 splitter = SubtitleSplitter(
                     thread_num=subtitle_config.thread_num,
@@ -123,7 +123,7 @@ class SubtitleThread(QThread):
 
             if subtitle_config.need_optimize:
                 update_stage("optimize")
-                self.progress.emit(0, self.tr("优化字幕..."))
+                self.progress.emit(0, self.tr("優化字幕..."))
                 logger.info("正在优化字幕...")
                 self.finished_subtitle_length = 0
                 if not subtitle_config.llm_model:
@@ -142,13 +142,13 @@ class SubtitleThread(QThread):
             # 4. 翻译字幕
             if subtitle_config.need_translate:
                 update_stage("translate")
-                self.progress.emit(0, self.tr("翻译字幕..."))
+                self.progress.emit(0, self.tr("翻譯字幕..."))
                 logger.info("正在翻译字幕...")
                 self.finished_subtitle_length = 0
                 translator_service = subtitle_config.translator_service
 
                 if not subtitle_config.target_language:
-                    raise Exception(self.tr("目标语言未配置"))
+                    raise Exception(self.tr("目標語言未配置"))
 
                 if translator_service == TranslatorServiceEnum.OPENAI:
                     if not subtitle_config.llm_model:
@@ -186,6 +186,15 @@ class SubtitleThread(QThread):
                         timeout=20,
                         update_callback=self.callback,
                     )
+                elif translator_service == TranslatorServiceEnum.OPENCC:
+                    from app.core.translate.opencc_translator import OpenCCTranslator
+                    translator = OpenCCTranslator(
+                        thread_num=subtitle_config.thread_num,
+                        batch_num=50,
+                        target_language=subtitle_config.target_language,
+                        timeout=10,
+                        update_callback=self.callback,
+                    )
                 else:
                     raise Exception(self.tr(f"不支持的翻译服务: {translator_service}"))
 
@@ -215,6 +224,16 @@ class SubtitleThread(QThread):
                 ass_style=subtitle_config.subtitle_style or "",
                 layout=subtitle_config.subtitle_layout or SubtitleLayoutEnum.ONLY_TRANSLATE,
             )
+            
+            from app.common.config import cfg
+            if cfg.output_txt.value and self.task.output_path:
+                txt_save_path = str(Path(self.task.output_path).with_suffix(".txt"))
+                asr_data.save(
+                    save_path=txt_save_path,
+                    ass_style=subtitle_config.subtitle_style or "",
+                    layout=subtitle_config.subtitle_layout or SubtitleLayoutEnum.ONLY_TRANSLATE,
+                )
+            
             logger.info(f"字幕保存到 {self.task.output_path}")
 
             # 6. 文件移动与清理
@@ -235,15 +254,25 @@ class SubtitleThread(QThread):
                     layout=subtitle_config.subtitle_layout,
                     style_str=subtitle_config.subtitle_style,
                 )
+                
+                from app.common.config import cfg
+                if cfg.output_txt.value:
+                    save_txt_path = (
+                        Path(self.task.video_path).parent / f"{Path(self.task.video_path).stem}.txt"
+                    )
+                    asr_data.to_txt(
+                        save_path=str(save_txt_path),
+                        layout=subtitle_config.subtitle_layout,
+                    )
 
-            self.progress.emit(100, self.tr("优化完成"))
+            self.progress.emit(100, self.tr("優化完成"))
             logger.info("优化完成")
             self.finished.emit(self.task.video_path, self.task.output_path)
 
         except Exception as e:
             logger.exception(f"字幕处理失败: {str(e)}")
             self.error.emit(str(e))
-            self.progress.emit(100, self.tr("字幕处理失败"))
+            self.progress.emit(100, self.tr("字幕處理失敗"))
         finally:
             clear_task_context()
 
@@ -258,6 +287,7 @@ class SubtitleThread(QThread):
                     TranslatorServiceEnum.DEEPLX,
                     TranslatorServiceEnum.BING,
                     TranslatorServiceEnum.GOOGLE,
+                    TranslatorServiceEnum.OPENCC,
                 ]
             )
         )
@@ -266,7 +296,7 @@ class SubtitleThread(QThread):
         self.finished_subtitle_length += len(result)
         # 简单计算当前进度（0-100%）
         progress = min(int((self.finished_subtitle_length / self.subtitle_length) * 100), 100)
-        self.progress.emit(progress, self.tr("{0}% 处理字幕").format(progress))
+        self.progress.emit(progress, self.tr("{0}% 處理字幕").format(progress))
         # 转换为字典格式供UI使用
         result_dict = {
             str(data.index): data.translated_text or data.optimized_text or data.original_text
@@ -291,8 +321,8 @@ class SubtitleThread(QThread):
                 logger.warning("线程未能在3秒内正常停止")
 
             # 发送进度信号
-            self.progress.emit(100, self.tr("已终止"))
+            self.progress.emit(100, self.tr("已終止"))
 
         except Exception as e:
             logger.error(f"停止线程时出错：{str(e)}")
-            self.progress.emit(100, self.tr("终止时发生错误"))
+            self.progress.emit(100, self.tr("終止時發生錯誤"))

@@ -38,20 +38,20 @@ class HomeInterface(QWidget):
         self.video_synthesis_interface = VideoSynthesisInterface(self)
 
         self.addSubInterface(
-            self.task_creation_interface, "TaskCreationInterface", self.tr("任务创建")
+            self.task_creation_interface, "TaskCreationInterface", self.tr("任務創建")
         )
         self.addSubInterface(
-            self.transcription_interface, "TranscriptionInterface", self.tr("语音转录")
+            self.transcription_interface, "TranscriptionInterface", self.tr("語音轉錄")
         )
         self.addSubInterface(
             self.subtitle_optimization_interface,
             "SubtitleInterface",
-            self.tr("字幕优化与翻译"),
+            self.tr("字幕優化與翻譯"),
         )
         self.addSubInterface(
             self.video_synthesis_interface,
             "VideoSynthesisInterface",
-            self.tr("字幕视频合成"),
+            self.tr("字幕視頻合成"),
         )
 
         self.vBoxLayout.addWidget(self.pivot)

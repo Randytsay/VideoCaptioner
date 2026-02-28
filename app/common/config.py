@@ -23,6 +23,7 @@ from app.core.utils.platform_utils import get_available_transcribe_models
 
 from ..core.entities import (
     FasterWhisperModelEnum,
+    FileConflictPolicy,
     LLMServiceEnum,
     SubtitleLayoutEnum,
     SubtitleRenderModeEnum,
@@ -149,13 +150,11 @@ class Config(QConfig):
         PlatformAwareTranscribeModelValidator(),
         EnumSerializer(TranscribeModelEnum),
     )
-    transcribe_output_format = OptionsConfigItem(
-        "Transcribe",
-        "OutputFormat",
-        TranscribeOutputFormatEnum.SRT,
-        OptionsValidator(TranscribeOutputFormatEnum),
-        EnumSerializer(TranscribeOutputFormatEnum),
-    )
+    transcribe_format_srt = ConfigItem("Transcribe", "FormatSRT", True, BoolValidator())
+    transcribe_format_vtt = ConfigItem("Transcribe", "FormatVTT", False, BoolValidator())
+    transcribe_format_ass = ConfigItem("Transcribe", "FormatASS", False, BoolValidator())
+    transcribe_format_json = ConfigItem("Transcribe", "FormatJSON", False, BoolValidator())
+    transcribe_format_txt = ConfigItem("Transcribe", "FormatTXT", False, BoolValidator())
     transcribe_language = OptionsConfigItem(
         "Transcribe",
         "TranscribeLanguage",
@@ -200,7 +199,7 @@ class Config(QConfig):
     faster_whisper_vad_method = OptionsConfigItem(
         "FasterWhisper",
         "VadMethod",
-        VadMethodEnum.SILERO_V4,
+        VadMethodEnum.SILERO_V5,
         OptionsValidator(VadMethodEnum),
         EnumSerializer(VadMethodEnum),
     )
@@ -228,7 +227,7 @@ class Config(QConfig):
     target_language = OptionsConfigItem(
         "Subtitle",
         "TargetLanguage",
-        TargetLanguage.SIMPLIFIED_CHINESE,
+        TargetLanguage.TRADITIONAL_CHINESE,
         OptionsValidator(TargetLanguage),
         EnumSerializer(TargetLanguage),
     )
@@ -239,6 +238,16 @@ class Config(QConfig):
         "Subtitle", "MaxWordCountEnglish", 20, RangeValidator(8, 100)
     )
     custom_prompt_text = ConfigItem("Subtitle", "CustomPromptText", "")
+    output_txt = ConfigItem("Subtitle", "OutputTxt", False, BoolValidator())
+
+    # ------------------- 批次處理配置 -------------------
+    file_conflict_policy = OptionsConfigItem(
+        "Batch",
+        "FileConflictPolicy",
+        FileConflictPolicy.OVERWRITE,
+        OptionsValidator(FileConflictPolicy),
+        EnumSerializer(FileConflictPolicy),
+    )
 
     # ------------------- 字幕合成配置 -------------------
     soft_subtitle = ConfigItem("Video", "SoftSubtitle", False, BoolValidator())

@@ -37,23 +37,23 @@ class TranscriptThread(QThread):
         except Exception as e:
             logger.exception("转录过程中发生错误: %s", str(e))
             self.error.emit(str(e))
-            self.progress.emit(100, self.tr("转录失败"))
+            self.progress.emit(100, self.tr("轉錄失敗"))
 
     def _validate_task(self):
         """验证任务配置"""
         if not self.task.file_path:
-            raise ValueError(self.tr("文件路径为空"))
+            raise ValueError(self.tr("文件路徑為空"))
 
         video_path = Path(self.task.file_path)
         if not video_path.exists():
             logger.error(f"视频文件不存在：{video_path}")
-            raise ValueError(self.tr("视频文件不存在"))
+            raise ValueError(self.tr("視頻文件不存在"))
 
         if not self.task.transcribe_config:
-            raise ValueError(self.tr("转录配置为空"))
+            raise ValueError(self.tr("轉錄配置為空"))
 
         if not self.task.output_path:
-            raise ValueError(self.tr("输出路径为空"))
+            raise ValueError(self.tr("輸出路徑為空"))
 
     def _check_downloaded_subtitle(self) -> bool:
         """检查是否存在下载的字幕文件"""
@@ -71,7 +71,7 @@ class TranscriptThread(QThread):
         subtitle_file = downloaded_subtitles[0]
         self.task.output_path = str(subtitle_file)
         logger.info(f"字幕文件已下载，跳过转录。找到下载的字幕文件：{subtitle_file}")
-        self.progress.emit(100, self.tr("字幕已下载"))
+        self.progress.emit(100, self.tr("字幕已下載"))
         self.finished.emit(self.task)
         return True
 
@@ -83,7 +83,7 @@ class TranscriptThread(QThread):
 
         video_path = Path(self.task.file_path)
 
-        self.progress.emit(5, self.tr("转换音频中"))
+        self.progress.emit(5, self.tr("轉換音頻中"))
         logger.info("开始转换音频")
 
         # 创建临时音频文件（delete=False 避免 Windows 权限问题）
@@ -102,9 +102,9 @@ class TranscriptThread(QThread):
             )
             if not is_success:
                 logger.error("音频转换失败")
-                raise RuntimeError(self.tr("音频转换失败"))
+                raise RuntimeError(self.tr("音頻轉換失敗"))
 
-            self.progress.emit(20, self.tr("语音转录中"))
+            self.progress.emit(20, self.tr("語音轉錄中"))
             logger.info("开始语音转录")
 
             # 进行转录
@@ -114,23 +114,28 @@ class TranscriptThread(QThread):
                 callback=self.progress_callback,
             )
 
+            # 如果目標語言是繁體中文，且轉錄內容包含中文，則進行自動繁體化
+            from app.core.translate.types import TargetLanguage
+            from app.common.config import cfg
+            if cfg.target_language.value == TargetLanguage.TRADITIONAL_CHINESE:
+                logger.info("檢測到目標語言為繁體中文，正在應用 OpenCC 轉換...")
+                asr_data.convert_to_traditional()
+
             # 保存字幕文件（根据配置的输出格式）
             output_path = Path(self.task.output_path)
-            output_format_enum = self.task.transcribe_config.output_format
+            output_formats = self.task.transcribe_config.output_formats
             base_path = output_path.with_suffix("")
             
             # 根据选择的格式导出
-            if output_format_enum == TranscribeOutputFormatEnum.ALL:
-                formats_to_export = [
-                    fmt.value.lower() 
-                    for fmt in TranscribeOutputFormatEnum 
-                    if fmt != TranscribeOutputFormatEnum.ALL
-                ]
-            else:
-                formats_to_export = [output_format_enum.value.lower()]
+            formats_to_export = [fmt.lower() for fmt in output_formats] if output_formats else ["srt"]
             
             if self.task.need_next_task:
-                formats_to_export.append(TranscribeOutputFormatEnum.SRT.value.lower())
+                formats_to_export.append("srt")
+                
+            from app.common.config import cfg
+            if getattr(cfg, "output_txt", None) and cfg.output_txt.value:
+                formats_to_export.append("txt")
+                
             formats_to_export = list(set(formats_to_export))
             
             # 保存字幕文件
@@ -139,7 +144,7 @@ class TranscriptThread(QThread):
                 asr_data.save(save_path)
                 logger.info("%s 字幕文件已保存到: %s", fmt.upper(), save_path)
 
-            self.progress.emit(100, self.tr("转录完成"))
+            self.progress.emit(100, self.tr("轉錄完成"))
             self.finished.emit(self.task)
         finally:
             Path(temp_audio_path).unlink(missing_ok=True)
