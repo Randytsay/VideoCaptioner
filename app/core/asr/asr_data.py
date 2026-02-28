@@ -227,6 +227,25 @@ class ASRData:
             logger.error(f"OpenCC 繁體轉換失敗: {str(e)}")
         return self
 
+    def apply_custom_mappings(self, mapping: dict) -> "ASRData":
+        """套用自定義詞典進行批量置換
+        
+        Args:
+            mapping: 包含 原詞:正確詞 的字典
+        """
+        if not mapping:
+            return self
+            
+        # 依照鍵的長度降序排序，確保長詞優先匹配（例如「活佛法」優先於「活佛」）
+        sorted_keys = sorted(mapping.keys(), key=len, reverse=True)
+        
+        for seg in self.segments:
+            for key in sorted_keys:
+                seg.text = seg.text.replace(key, mapping[key])
+                if seg.translated_text:
+                    seg.translated_text = seg.translated_text.replace(key, mapping[key])
+        return self
+
     def remove_punctuation(self) -> "ASRData":
         """Remove trailing Chinese punctuation (comma, period) from segments."""
         punctuation = r"[，。]"

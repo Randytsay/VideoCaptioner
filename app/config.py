@@ -25,6 +25,8 @@ ASSETS_PATH = RESOURCE_PATH / "assets"
 SUBTITLE_STYLE_PATH = RESOURCE_PATH / "subtitle_style"
 TRANSLATIONS_PATH = RESOURCE_PATH / "translations"
 FONTS_PATH = RESOURCE_PATH / "fonts"
+CUSTOM_DICT_PATH = RESOURCE_PATH / "custom_dicts"
+WHISPER_PROMPTS_PATH = RESOURCE_PATH / "whisper_prompts"
 
 LOG_PATH = APPDATA_PATH / "logs"
 LLM_LOG_FILE = LOG_PATH / "llm_requests.jsonl"
@@ -46,5 +48,5 @@ os.environ["PATH"] = str(BIN_PATH) + os.pathsep + os.environ["PATH"]
 os.environ["PYTHON_VLC_MODULE_PATH"] = str(BIN_PATH / "vlc")
 
 # 创建路径
-for p in [CACHE_PATH, LOG_PATH, WORK_PATH, MODEL_PATH]:
+for p in [CACHE_PATH, LOG_PATH, WORK_PATH, MODEL_PATH, CUSTOM_DICT_PATH, WHISPER_PROMPTS_PATH]:
     p.mkdir(parents=True, exist_ok=True)

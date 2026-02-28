@@ -213,6 +213,8 @@ class Config(QConfig):
     )
     # 提示词
     faster_whisper_prompt = ConfigItem("FasterWhisper", "Prompt", "")
+    # 選取的提示詞檔案（逗號分隔檔名）
+    selected_whisper_prompts = ConfigItem("FasterWhisper", "SelectedPrompts", "")
 
     # ------------------- Whisper API 配置 -------------------
     whisper_api_base = ConfigItem("WhisperAPI", "WhisperApiBase", "")

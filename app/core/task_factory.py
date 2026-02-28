@@ -136,7 +136,36 @@ class TaskFactory:
             faster_whisper_prompt=cfg.faster_whisper_prompt.value,
         )
 
+        # 合併使用者選取的提示詞檔案
+        from app.config import WHISPER_PROMPTS_PATH
+        selected_str = cfg.selected_whisper_prompts.value or ""
+        selected_files = [s.strip() for s in selected_str.split(",") if s.strip()]
+        if selected_files:
+            prompt_parts = []
+            prompts_path = Path(WHISPER_PROMPTS_PATH)
+            for fname in selected_files:
+                fpath = prompts_path / fname
+                if fpath.exists():
+                    try:
+                        text = fpath.read_text(encoding="utf-8")
+                        keywords = " ".join(
+                            line.strip()
+                            for line in text.splitlines()
+                            if line.strip() and not line.strip().startswith("#")
+                        )
+                        if keywords:
+                            prompt_parts.append(keywords)
+                    except Exception:
+                        pass
+            if prompt_parts:
+                file_prompt = " ".join(prompt_parts)
+                existing = config.faster_whisper_prompt or ""
+                config.faster_whisper_prompt = (
+                    f"{file_prompt} {existing}".strip() if existing else file_prompt
+                )
+
         task = TranscribeTask(
+
             queued_at=datetime.datetime.now(),
             file_path=file_path,
             output_path=output_path,

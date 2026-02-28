@@ -11,25 +11,27 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
+    QGridLayout,
+    QSizePolicy,
 )
 from qfluentwidgets import (
     BodyLabel,
     ComboBox,
     ComboBoxSettingCard,
-    HyperlinkButton,
     HyperlinkCard,
     InfoBar,
     InfoBarPosition,
     MessageBoxBase,
     ProgressBar,
-    PushButton,
     SettingCardGroup,
     SingleDirectionScrollArea,
     SubtitleLabel,
     SwitchSettingCard,
     TableItemDelegate,
     TableWidget,
+    CheckBox,
 )
+from qfluentwidgets.components.widgets.button import HyperlinkButton, PushButton
 from qfluentwidgets import FluentIcon as FIF
 
 from app.common.config import cfg
@@ -838,7 +840,53 @@ class FasterWhisperSettingWidget(QWidget):
         self.other_group.addSettingCard(self.one_word_card)
         self.other_group.addSettingCard(self.prompt_card)
 
+        # ==================== 提示詞檔案選擇 ====================
+        from app.config import WHISPER_PROMPTS_PATH
+
+        self.prompt_title = SubtitleLabel(self.tr("提示詞檔案"), self)
+
+        self.prompt_files_container = QWidget(self)
+        self.prompt_files_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        prompt_files_layout = QVBoxLayout(self.prompt_files_container)
+        prompt_files_layout.setContentsMargins(0, 4, 16, 24)
+        prompt_files_layout.setSpacing(12)
+
+        desc_label = BodyLabel(
+            self.tr("勾選要在轉錄時參考的提示詞檔案（檔案位於 resource/whisper_prompts/）")
+        )
+        desc_label.setWordWrap(True)
+        prompt_files_layout.addWidget(desc_label)
+
+        # 掃描資料夾中的 .txt 檔案
+        self.prompt_checkboxes = {}
+        prompt_path = Path(WHISPER_PROMPTS_PATH)
+        selected_str = cfg.selected_whisper_prompts.value or ""
+        selected_set = set(s.strip() for s in selected_str.split(",") if s.strip())
+
+        txt_files = sorted(prompt_path.glob("*.txt"))
+        if txt_files:
+            grid = QGridLayout()
+            grid.setSpacing(16)
+            for i, f in enumerate(txt_files):
+                cb = CheckBox(f.stem)
+                cb.setChecked(f.name in selected_set)
+                cb.stateChanged.connect(self._on_prompt_file_toggled)
+                self.prompt_checkboxes[f.name] = cb
+                grid.addWidget(cb, i // 4, i % 4)
+            prompt_files_layout.addLayout(grid)
+        else:
+            no_file_label = BodyLabel(self.tr("（尚無提示詞檔案）"))
+            prompt_files_layout.addWidget(no_file_label)
+
+        # 開啟資料夾按鈕
+        open_prompts_btn = HyperlinkButton("", self.tr("開啟提示詞資料夾"), parent=self)
+        open_prompts_btn.setIcon(FIF.FOLDER)
+        open_prompts_btn.clicked.connect(lambda: open_folder(str(WHISPER_PROMPTS_PATH)))
+        prompt_files_layout.addWidget(open_prompts_btn)
+
         # 将所有设置组添加到容器布局
+        self.containerLayout.addWidget(self.prompt_title)
+        self.containerLayout.addWidget(self.prompt_files_container)
         self.containerLayout.addWidget(self.setting_group)
         self.containerLayout.addWidget(self.vad_group)
         self.containerLayout.addWidget(self.other_group)
@@ -862,6 +910,13 @@ class FasterWhisperSettingWidget(QWidget):
         """连接信号"""
         self.manage_model_card.linkButton.clicked.connect(self._show_model_manager)
         self.vad_filter_card.checkedChanged.connect(self._on_vad_filter_changed)
+
+    def _on_prompt_file_toggled(self, state):
+        """提示詞檔案勾選狀態改變時，儲存到設定"""
+        selected = [
+            name for name, cb in self.prompt_checkboxes.items() if cb.isChecked()
+        ]
+        cfg.set(cfg.selected_whisper_prompts, ",".join(selected))
 
     def _on_vad_filter_changed(self, checked: bool):
         """VAD过滤开关状态改变时的处理"""

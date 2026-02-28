@@ -7,7 +7,9 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from app.core.asr import transcribe
 from app.core.entities import TranscribeOutputFormatEnum, TranscribeTask
 from app.core.utils.logger import setup_logger
+from app.config import CUSTOM_DICT_PATH
 from app.core.utils.video_utils import video2audio
+from app.core.utils.text_utils import load_custom_dicts
 
 logger = setup_logger("transcript_thread")
 
@@ -120,6 +122,13 @@ class TranscriptThread(QThread):
             if cfg.target_language.value == TargetLanguage.TRADITIONAL_CHINESE:
                 logger.info("檢測到目標語言為繁體中文，正在應用 OpenCC 轉換...")
                 asr_data.convert_to_traditional()
+
+            # 應用自定義詞典進行修正
+            from app.config import CUSTOM_DICT_PATH
+            mappings = load_custom_dicts(str(CUSTOM_DICT_PATH))
+            if mappings:
+                logger.info(f"正在應用自定義對照表 (共 {len(mappings)} 個詞條)...")
+                asr_data.apply_custom_mappings(mappings)
 
             # 保存字幕文件（根据配置的输出格式）
             output_path = Path(self.task.output_path)

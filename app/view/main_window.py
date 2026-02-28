@@ -26,6 +26,7 @@ from app.view.home_interface import HomeInterface
 from app.view.llm_logs_interface import LLMLogsInterface
 from app.view.setting_interface import SettingInterface
 from app.view.subtitle_style_interface import SubtitleStyleInterface
+from app.view.tools_interface import ToolsInterface
 
 LOGO_PATH = ASSETS_PATH / "logo.png"
 
@@ -41,6 +42,7 @@ class MainWindow(FluentWindow):
         self.subtitleStyleInterface = SubtitleStyleInterface(self)
         self.batchProcessInterface = BatchProcessInterface(self)
         self.llmLogsInterface = LLMLogsInterface(self)
+        self.toolsInterface = ToolsInterface(self)
 
         # 初始化版本检查器
         self.versionChecker = VersionChecker()
@@ -69,6 +71,7 @@ class MainWindow(FluentWindow):
         self.addSubInterface(self.batchProcessInterface, FIF.VIDEO, self.tr("批量處理"))
         self.addSubInterface(self.subtitleStyleInterface, FIF.FONT, self.tr("字幕樣式"))
         self.addSubInterface(self.llmLogsInterface, FIF.HISTORY, self.tr("請求日誌"))
+        self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, self.tr("小工具"))
 
         self.navigationInterface.addSeparator()
 

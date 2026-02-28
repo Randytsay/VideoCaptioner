@@ -78,28 +78,61 @@ def count_words(text: str) -> int:
 
     按单词计数的语言（使用空格分词）：
     - 拉丁字母语言 (英语、法语、德语、西班牙语等)
-    - 西里尔字母语言 (俄语、乌克兰语、保加利亚语等)
-    - 希腊字母、阿拉伯字母、希伯来字母等
+    - 西里爾字母語言 (俄語、烏克蘭語、保加利亞語等)
+    - 希臘字母、阿拉伯字母、希伯來字母等
 
-    混合文本处理：
-    - 按字符计数的语言统计字符数
-    - 按单词计数的语言统计单词数
-    - 返回总和
+    混合文本處理：
+    - 按字元計數的語言統計字元數
+    - 按單詞計數的語言統計單詞數
+    - 返回總和
 
     Args:
-        text: 待统计的文本
+        text: 待統計的文本
 
     Returns:
-        字符数 + 单词数
+        字元數 + 單詞數
     """
     if not text:
         return 0
 
-    # 统计不使用空格的语言的字符数（CJK + 泰文/缅甸文等）
+    # 統計不使用空格的語言的字元數（CJK + 泰文/緬甸文等）
     char_count = len(re.findall(_NO_SPACE_LANGUAGES, text))
 
-    # 移除不使用空格的字符后，统计使用空格的语言的单词数
+    # 移除不使用空格的字元後，統計使用空格的語言的單詞數
     word_text = re.sub(_NO_SPACE_LANGUAGES, " ", text)
     word_count = len(word_text.strip().split())
 
     return char_count + word_count
+
+
+def load_custom_dicts(dict_path: str) -> dict:
+    """載入自定義詞典檔案
+    
+    支援格式：原詞[空格或Tab]正確詞，一行一對。
+    載入指定目錄下所有的 .txt 檔案。
+    """
+    import os
+    from pathlib import Path
+
+    mapping = {}
+    path = Path(dict_path)
+    if not path.exists() or not path.is_dir():
+        return mapping
+
+    # 遍歷目錄下所有 .txt 檔案
+    for file in path.glob("*.txt"):
+        try:
+            with open(file, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    
+                    # 支援 Tab 或 空格 分隔
+                    parts = re.split(r"\s+", line, maxsplit=1)
+                    if len(parts) == 2:
+                        mapping[parts[0]] = parts[1]
+        except Exception:
+            continue
+
+    return mapping
