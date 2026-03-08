@@ -448,9 +448,9 @@ class BatchProcessInterface(QWidget):
                 break
 
     def on_task_completed(self, file_path: str):
+        from PyQt5.QtGui import QColor
         for row in range(self.task_table.rowCount()):
             if self.task_table.item(row, 0).toolTip() == file_path:
-                self.task_table.item(row, 2).setText(str(BatchTaskStatus.COMPLETED))
                 self.task_table.item(row, 2).setForeground(QColor("#13A10E"))
                 break
 

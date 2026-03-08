@@ -498,15 +498,38 @@ class SubtitleInterface(QWidget):
         self.start_button.setEnabled(True)
         self.cancel_button.hide()
         self.progress_bar.setValue(100)
+        
+        elapsed_msg = ""
+        if self.task and self.task.started_at and self.task.completed_at:
+            elapsed = (self.task.completed_at - self.task.started_at).total_seconds()
+            m, s = divmod(int(elapsed), 60)
+            elapsed_msg = f"⏱️ 耗時: {m}分{s}秒\n"
+            if hasattr(self.task, "media_duration") and self.task.media_duration > 0:
+                speed = self.task.media_duration / elapsed if elapsed > 0 else 0
+                elapsed_msg += f"⚡ 速度: {speed:.1f}x (相對於視訊/音訊總長)"
+                
         if self.task and self.task.need_next_task:
             self.finished.emit(video_path, output_path)
-        InfoBar.success(
-            self.tr("優化完成"),
-            self.tr("優化完成字幕..."),
-            duration=INFOBAR_DURATION_SUCCESS,
-            position=InfoBarPosition.BOTTOM,
-            parent=self.parent(),
-        )
+            
+            msg = self.tr("開始視頻合成...\n")
+            if elapsed_msg:
+                msg += f"\n{elapsed_msg}"
+                
+            InfoBar.success(
+                self.tr("優化完成"),
+                msg,
+                duration=INFOBAR_DURATION_SUCCESS,
+                position=InfoBarPosition.BOTTOM,
+                parent=self.parent(),
+            )
+        else:
+            from qfluentwidgets import MessageBox
+            content = self.tr("字幕處理已成功完成！")
+            if elapsed_msg:
+                content += f"\n\n{elapsed_msg}"
+            w = MessageBox(self.tr("處理完成"), content, self.window())
+            w.cancelButton.hide()
+            w.exec_()
 
     def on_subtitle_optimization_error(self, error: str) -> None:
         self.start_button.setEnabled(True)

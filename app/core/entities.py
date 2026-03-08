@@ -742,6 +742,9 @@ class TranscribeTask:
     # 选中的音轨索引
     selected_audio_track_index: int = 0
 
+    # 媒体长度，用于计算处理速度
+    media_duration: float = 0.0
+
     transcribe_config: Optional[TranscribeConfig] = None
 
 
@@ -766,6 +769,9 @@ class SubtitleTask:
 
     # 是否需要执行下一个任务（视频合成）
     need_next_task: bool = True
+
+    # 媒体长度，用于计算处理速度
+    media_duration: float = 0.0
 
     subtitle_config: Optional[SubtitleConfig] = None
 

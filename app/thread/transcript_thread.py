@@ -74,6 +74,7 @@ class TranscriptThread(QThread):
         self.task.output_path = str(subtitle_file)
         logger.info(f"字幕文件已下载，跳过转录。找到下载的字幕文件：{subtitle_file}")
         self.progress.emit(100, self.tr("字幕已下載"))
+        self.task.completed_at = datetime.datetime.now()
         self.finished.emit(self.task)
         return True
 
@@ -154,6 +155,7 @@ class TranscriptThread(QThread):
                 logger.info("%s 字幕文件已保存到: %s", fmt.upper(), save_path)
 
             self.progress.emit(100, self.tr("轉錄完成"))
+            self.task.completed_at = datetime.datetime.now()
             self.finished.emit(self.task)
         finally:
             Path(temp_audio_path).unlink(missing_ok=True)

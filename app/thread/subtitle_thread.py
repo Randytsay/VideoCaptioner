@@ -70,6 +70,9 @@ class SubtitleThread(QThread):
             raise Exception(self.tr("LLM API 未配置, 請檢查LLM配置"))
 
     def run(self):
+        import datetime
+        self.task.started_at = datetime.datetime.now()
+
         # 设置任务上下文
         task_file = (
             Path(self.task.video_path) if self.task.video_path else Path(self.task.subtitle_path)
@@ -267,6 +270,8 @@ class SubtitleThread(QThread):
 
             self.progress.emit(100, self.tr("優化完成"))
             logger.info("优化完成")
+            import datetime
+            self.task.completed_at = datetime.datetime.now()
             self.finished.emit(self.task.video_path, self.task.output_path)
 
         except Exception as e:

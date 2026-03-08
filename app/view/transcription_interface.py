@@ -294,6 +294,9 @@ class VideoInfoCard(CardWidget):
 
         # 将选中的音轨索引作为临时属性传递给 task
         self.task.selected_audio_track_index = self.selected_audio_track_index  # type: ignore
+        
+        if self.video_info:
+            self.task.media_duration = self.video_info.duration_seconds
 
         self.transcript_thread = TranscriptThread(self.task)
         self.transcript_thread.finished.connect(self.on_transcript_finished)
@@ -467,16 +470,36 @@ class TranscriptionInterface(QWidget):
     def _on_transcript_finished(self, task: TranscribeTask):
         """转录完成处理"""
         self.is_processing = False
+        
+        elapsed_msg = ""
+        if task.started_at and task.completed_at and task.media_duration > 0:
+            elapsed = (task.completed_at - task.started_at).total_seconds()
+            speed = task.media_duration / elapsed if elapsed > 0 else 0
+            m, s = divmod(int(elapsed), 60)
+            elapsed_msg = f"⏱️ 耗時: {m}分{s}秒\n⚡ 速度: {speed:.1f}x (相對於音軌總長)"
+            
         if task.need_next_task:
             self.finished.emit(task.output_path, task.file_path)
 
+            msg = self.tr("開始字幕優化...")
+            if elapsed_msg:
+                msg += f"\n\n{elapsed_msg}"
+            
             InfoBar.success(
                 self.tr("轉錄完成"),
-                self.tr("開始字幕優化..."),
+                msg,
                 duration=INFOBAR_DURATION_SUCCESS,
                 position=InfoBarPosition.BOTTOM,
                 parent=self.parent(),
             )
+        else:
+            from qfluentwidgets import MessageBox
+            content = self.tr("語音轉文字已成功匯出！")
+            if elapsed_msg:
+                content += f"\n\n{elapsed_msg}"
+            w = MessageBox(self.tr("處理完成"), content, self.window())
+            w.cancelButton.hide()
+            w.exec_()
 
     def _on_file_select(self):
         """文件选择处理"""

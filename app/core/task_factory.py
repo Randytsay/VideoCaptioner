@@ -148,18 +148,37 @@ class TaskFactory:
                 if fpath.exists():
                     try:
                         text = fpath.read_text(encoding="utf-8")
-                        keywords = " ".join(
-                            line.strip()
-                            for line in text.splitlines()
-                            if line.strip() and not line.strip().startswith("#")
-                        )
-                        if keywords:
-                            prompt_parts.append(keywords)
+                        # 將檔案內的詞彙用逗號和句號隔開，避免 Whisper 模仿無標點符號的格式
+                        words = []
+                        for line in text.splitlines():
+                            line = line.strip()
+                            if not line or line.startswith("#"):
+                                continue
+                            # 支援空白或 Tab 隔開的詞
+                            for w in line.split():
+                                if w.strip():
+                                    words.append(w.strip())
+                        
+                        if words:
+                            # 每 5 個詞加一個逗號，最後加句號，引導模型輸出標點
+                            formatted_phrase = ""
+                            for i, w in enumerate(words):
+                                formatted_phrase += w
+                                if i == len(words) - 1:
+                                    formatted_phrase += "。"
+                                elif (i + 1) % 5 == 0:
+                                    formatted_phrase += "，"
+                                else:
+                                    formatted_phrase += "、"
+                            prompt_parts.append(formatted_phrase)
                     except Exception:
                         pass
             if prompt_parts:
                 file_prompt = " ".join(prompt_parts)
                 existing = config.faster_whisper_prompt or ""
+                # 將自定義內容用標點符號結尾
+                if existing and not existing[-1] in ["。", ".", "！", "!", "？", "?"]:
+                    existing += "。"
                 config.faster_whisper_prompt = (
                     f"{file_prompt} {existing}".strip() if existing else file_prompt
                 )

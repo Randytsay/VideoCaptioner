@@ -29,6 +29,9 @@ class BatchTask:
         self.progress = 0
         self.error_message = ""
         self.current_thread: Optional[QThread] = None
+        self.started_at = None
+        self.completed_at = None
+        self.media_duration: float = 0.0
 
 
 class BatchProcessThread(QThread):
@@ -74,6 +77,16 @@ class BatchProcessThread(QThread):
 
     def _process_task(self, batch_task: BatchTask):
         try:
+            import datetime
+            from app.core.utils.video_utils import get_video_info
+            
+            batch_task.started_at = datetime.datetime.now()
+            
+            # 获取媒体时长以计算速度
+            v_info = get_video_info(batch_task.file_path)
+            if v_info:
+                batch_task.media_duration = v_info.duration_seconds
+                
             batch_task.status = BatchTaskStatus.RUNNING
             self.task_progress.emit(
                 batch_task.file_path, 0, str(BatchTaskStatus.RUNNING)
@@ -104,10 +117,25 @@ class BatchProcessThread(QThread):
         batch_task.error_message = error
         self.task_error.emit(batch_task.file_path, error)
 
-    def _on_finished_wrapper(self, batch_task: BatchTask, task=None):
+    def _on_finished_wrapper(self, batch_task: BatchTask, *args):
         """完成信号包装器"""
         batch_task.status = BatchTaskStatus.COMPLETED
         batch_task.progress = 100
+        
+        elapsed_msg = "已完成"
+        if batch_task.started_at:
+            import datetime
+            batch_task.completed_at = datetime.datetime.now()
+            elapsed = (batch_task.completed_at - batch_task.started_at).total_seconds()
+            m, s = divmod(int(elapsed), 60)
+            elapsed_msg += f" (⏱️{m}分{s}秒"
+            if batch_task.media_duration and batch_task.media_duration > 0:
+                speed = batch_task.media_duration / elapsed if elapsed > 0 else 0
+                elapsed_msg += f", ⚡{speed:.1f}x)"
+            else:
+                elapsed_msg += ")"
+        
+        self.task_progress.emit(batch_task.file_path, 100, elapsed_msg)
         self.task_completed.emit(batch_task.file_path)
         if batch_task.current_thread in self.threads:
             self.threads.remove(batch_task.current_thread)
