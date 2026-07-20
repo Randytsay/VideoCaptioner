@@ -307,7 +307,29 @@ Completed implementation:
 `whisper-cli` is installed in the local environment, but no compatible Whisper
 model file was located, so real-model validation remains outstanding.
 
-### 15. Tests added
+### 15. Qwen optional adapters
+
+File:
+
+- `app/core/hybrid_asr/providers/qwen.py`
+
+Completed implementation:
+
+- lazy, single-instance `QwenTranscriber` adapter using the official
+  `Qwen3ASRModel` interface;
+- lazy `QwenForcedAligner` adapter using the official forced-alignment API;
+- provider context combines glossary terms and previous context without mixing
+  it into expected output;
+- ASR and forced alignment remain separate; the aligner returns timings for
+  supplied transcript text and does not replace it;
+- dependency-injected tests cover request mapping, model reuse, language
+  conversion, timestamps, and text-preservation behavior.
+
+The Qwen package and model weights are intentionally optional and have not yet
+been loaded in this project environment. The ASR 0.6B weight download is in
+progress under `AppData/models/qwen-asr/` and is Git-ignored.
+
+### 16. Tests added
 
 Directory:
 
@@ -344,10 +366,9 @@ The branch must not be considered production-ready until those commands pass or 
 
 The following are not implemented or not validated:
 
-1. Qwen ASR provider.
-2. Real Qwen model loading and device selection.
-3. Real FasterWhisper and WhisperCpp model loading and device validation.
-4. Qwen Forced Aligner provider.
+1. Real Qwen model loading and device selection.
+2. Real FasterWhisper and WhisperCpp model loading and device validation.
+3. Real Qwen Forced Aligner model loading and validation.
 5. Display-text/alignment-text reversible normalization.
 6. Real Chinese, mixed-language, sutra, and mantra alignment tests.
 7. Vertex AI Gemini transcription provider.

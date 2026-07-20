@@ -16,6 +16,10 @@ from .pipeline import SegmentPipeline, SegmentPipelineResult
 from .providers import (
     FasterWhisperConfig,
     FasterWhisperTranscriber,
+    QwenASRConfig,
+    QwenForcedAligner,
+    QwenForcedAlignerConfig,
+    QwenTranscriber,
     WhisperCppConfig,
     WhisperCppTranscriber,
 )
@@ -36,6 +40,10 @@ __all__ = [
     "GlossaryEntry",
     "GlossaryReplacement",
     "MediaScanConfig",
+    "QwenASRConfig",
+    "QwenForcedAligner",
+    "QwenForcedAlignerConfig",
+    "QwenTranscriber",
     "SegmentPipeline",
     "SegmentPipelineResult",
     "SubtitleCue",
