@@ -1,5 +1,10 @@
 # Hybrid ASR architecture
 
+> Current implementation status and agent takeover instructions are maintained in:
+>
+> - `docs/hybrid-asr-work-status.md`
+> - `docs/codex-hybrid-asr-handoff.md`
+
 ## Goal
 
 Add a reliable batch transcription pipeline without coupling model runtimes to the PyQt user interface. The final system should support local Qwen/Whisper transcription, Vertex AI Gemini transcription, forced alignment, glossary-aware correction, resumable jobs, and deterministic SRT generation.
@@ -36,23 +41,27 @@ media file
 5. Re-align the Gemini text locally.
 6. Use Whisper only as a fallback or second opinion, not as the authority over higher-quality Gemini text.
 
-## Module boundaries
+## Current module boundaries
 
 ```text
 app/core/hybrid_asr/
   models.py       shared immutable data structures
   interfaces.py   Transcriber and ForcedAligner protocols
+  audio.py        ffmpeg extraction and smart segmentation
+  scanner.py      recursive discovery and file-stability checks
+  glossary.py     glossary parsing, merging, corrections, and audit data
+  segmenter.py    deterministic subtitle segmentation
   quality.py      deterministic quality checks
-  srt.py          cue building, validation, atomic output
+  srt.py          cue validation, rendering, and atomic output
   persistence.py  SQLite schema and resumable job repository
+  pipeline.py     injected single-segment processing pipeline
 ```
 
 Future modules:
 
 ```text
-  audio.py        ffmpeg extraction and smart segmentation
-  glossary.py     folder mapping and text normalization
-  orchestrator.py pipeline coordination and fallback decisions
+  orchestrator.py whole-file/multi-segment coordination
+  normalization.py reversible display/alignment text mapping
   providers/
     qwen.py
     whisper.py
@@ -62,24 +71,43 @@ Future modules:
   cli.py
 ```
 
+## Existing VideoCaptioner integration points
+
+The agent must adapt, not blindly duplicate, these existing areas:
+
+- `app/core/asr/transcribe.py`: current Whisper and other ASR dispatch.
+- `app/core/asr/asr_data.py`: subtitle timing data, Traditional Chinese conversion, mappings, and export.
+- `app/core/task_factory.py`: prompt-file selection and task configuration.
+- `app/thread/transcript_thread.py`: production transcription workflow and custom dictionaries.
+- `app/thread/batch_process_thread.py`: PyQt batch queue and progress reporting.
+- `app/core/entities.py`: current configuration and task entities.
+
+The repository currently has no Qwen provider in its ASR dispatcher. The user's Qwen environment must be inspected locally before integration.
+
 ## Compatibility strategy
 
-The new core is isolated from existing VideoCaptioner code in the first phase. Existing GUI and ASR paths remain untouched. Providers will later adapt existing model-loading code rather than duplicate it.
+The new core remains isolated from existing VideoCaptioner production paths until CLI and real-model integration tests pass. Existing GUI and ASR paths remain untouched in the foundation phase. Providers should adapt existing model-loading code where available rather than duplicate it.
+
+If PyQt, Qwen, Whisper, PyTorch, transformers, or vLLM dependencies conflict, model providers may be moved into a separate local worker process while retaining the same core protocols.
 
 ## Known integration risks
 
 - Qwen, Whisper, PyTorch, transformers, vLLM, and PyQt may require incompatible dependency versions.
-- Model providers should eventually run in a separate local worker process if dependency conflicts appear.
 - Gemini timestamps are rough guidance only; final SRT timing should come from local forced alignment when available.
-- Chinese, English abbreviations, numbers, sutra text, and mantras require separate display-text and alignment-text normalization.
+- Chinese, English abbreviations, numbers, scripture text, and mantras require separate display-text and alignment-text normalization.
 - Google Drive mounted files must be stable before processing.
+- Media fingerprint changes must invalidate old segment results to prevent stale resume data.
+- Cross-segment audio overlap requires deterministic duplicate-text removal.
 
 ## Delivery phases
 
-1. Core interfaces, models, quality checks, SRT writer, SQLite repository.
-2. FFmpeg audio extraction and smart segmentation.
-3. Existing Qwen and Whisper adapters.
-4. Qwen forced aligner adapter and real local validation.
-5. Vertex AI Gemini provider.
-6. Hybrid orchestrator and CLI.
-7. Batch GUI and end-to-end long-media validation.
+1. Validate the complete foundation branch.
+2. Fix stale SQLite segment reuse after media changes.
+3. Validate FFmpeg against real media.
+4. Adapt existing Whisper providers.
+5. Integrate local Qwen ASR.
+6. Integrate Qwen forced alignment and reversible text normalization.
+7. Build whole-file orchestration and CLI.
+8. Add Vertex AI Gemini.
+9. Add smart fallback decisions and real-world validation.
+10. Add the Traditional Chinese batch GUI and complete regression testing.
