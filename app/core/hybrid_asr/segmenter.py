@@ -45,8 +45,21 @@ def _join_tokens(tokens: Sequence[AlignedToken]) -> str:
 
 
 def _wrap_text(text: str, width: int, max_lines: int) -> str:
+    """Wrap without ever discarding transcript text.
+
+    A provider can occasionally return a phrase-level token longer than the configured
+    cue capacity. In that case the final line is allowed to exceed the preferred width
+    instead of silently truncating spoken content.
+    """
+
+    if len(text) <= width:
+        return text
     lines = [text[index : index + width] for index in range(0, len(text), width)]
-    return "\n".join(lines[:max_lines])
+    if len(lines) <= max_lines:
+        return "\n".join(lines)
+    retained = lines[: max_lines - 1]
+    retained.append("".join(lines[max_lines - 1 :]))
+    return "\n".join(retained)
 
 
 def build_subtitle_cues(
@@ -71,16 +84,19 @@ def build_subtitle_cues(
 
         current.append(token)
         text = _join_tokens(current)
-        duration = current[-1].end_sec - current[0].start_sec
+        duration = max(0.001, current[-1].end_sec - current[0].start_sec)
+        compact_length = _compact_length(text)
+        reading_speed = compact_length / duration
         too_long = (
-            _compact_length(text) >= config.max_chars_per_cue
+            compact_length >= config.max_chars_per_cue
             or duration >= config.max_duration_sec
+            or reading_speed >= config.max_chars_per_second
         )
         terminal = bool(text and text[-1] in _TERMINAL_PUNCTUATION)
         soft_boundary = bool(
             text
             and text[-1] in _SOFT_PUNCTUATION
-            and _compact_length(text) >= config.max_chars_per_line
+            and compact_length >= config.max_chars_per_line
         )
         if too_long or terminal or soft_boundary:
             groups.append(current)
