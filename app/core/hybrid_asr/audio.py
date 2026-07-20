@@ -24,11 +24,39 @@ _SILENCE_START = re.compile(r"silence_start:\s*([0-9.]+)")
 _SILENCE_END = re.compile(r"silence_end:\s*([0-9.]+)")
 
 
-def require_ffmpeg(binary: str = "ffmpeg") -> str:
+def require_binary(binary: str) -> str:
     resolved = shutil.which(binary)
     if resolved is None:
         raise RuntimeError(f"{binary} was not found in PATH")
     return resolved
+
+
+def require_ffmpeg(binary: str = "ffmpeg") -> str:
+    return require_binary(binary)
+
+
+def probe_duration(source_path: Path, *, ffprobe_binary: str = "ffprobe") -> float:
+    binary = require_binary(ffprobe_binary)
+    command = [
+        binary,
+        "-v",
+        "error",
+        "-show_entries",
+        "format=duration",
+        "-of",
+        "default=noprint_wrappers=1:nokey=1",
+        str(source_path),
+    ]
+    completed = subprocess.run(command, capture_output=True, text=True, check=False)
+    if completed.returncode != 0:
+        raise RuntimeError(f"ffprobe failed: {completed.stderr.strip()}")
+    try:
+        duration = float(completed.stdout.strip())
+    except ValueError as exc:
+        raise RuntimeError("ffprobe returned an invalid duration") from exc
+    if duration <= 0:
+        raise RuntimeError("ffprobe returned a non-positive duration")
+    return duration
 
 
 def normalize_audio(
@@ -62,6 +90,34 @@ def normalize_audio(
     if completed.returncode != 0:
         output_path.unlink(missing_ok=True)
         raise RuntimeError(f"ffmpeg audio normalization failed: {completed.stderr.strip()}")
+
+
+def detect_silences(
+    audio_path: Path,
+    *,
+    threshold_db: float = -35.0,
+    minimum_duration_sec: float = 0.5,
+    ffmpeg_binary: str = "ffmpeg",
+) -> list[SilenceInterval]:
+    if minimum_duration_sec <= 0:
+        raise ValueError("minimum_duration_sec must be positive")
+    binary = require_ffmpeg(ffmpeg_binary)
+    command = [
+        binary,
+        "-hide_banner",
+        "-nostats",
+        "-i",
+        str(audio_path),
+        "-af",
+        f"silencedetect=noise={threshold_db}dB:d={minimum_duration_sec}",
+        "-f",
+        "null",
+        "-",
+    ]
+    completed = subprocess.run(command, capture_output=True, text=True, check=False)
+    if completed.returncode != 0:
+        raise RuntimeError(f"ffmpeg silence detection failed: {completed.stderr.strip()}")
+    return parse_silencedetect(completed.stderr)
 
 
 def parse_silencedetect(stderr: str) -> list[SilenceInterval]:
@@ -99,7 +155,11 @@ def choose_split_points(
     while target < duration_sec:
         lower = max(points[-1] + minimum_segment_sec, target - search_window_sec)
         upper = min(duration_sec - minimum_segment_sec, target + search_window_sec)
-        candidates = [silence.midpoint_sec for silence in silences if lower <= silence.midpoint_sec <= upper]
+        candidates = [
+            silence.midpoint_sec
+            for silence in silences
+            if lower <= silence.midpoint_sec <= upper
+        ]
         chosen = min(candidates, key=lambda point: abs(point - target)) if candidates else target
         if chosen <= points[-1]:
             break
@@ -129,7 +189,10 @@ def build_segment_plan(
     segments: list[AudioSegment] = []
     for index, (raw_start, raw_end) in enumerate(zip(points, points[1:]), start=1):
         start = max(0.0, raw_start - (overlap_sec if index > 1 else 0.0))
-        end = min(duration_sec, raw_end + (overlap_sec if raw_end < duration_sec else 0.0))
+        end = min(
+            duration_sec,
+            raw_end + (overlap_sec if raw_end < duration_sec else 0.0),
+        )
         segments.append(
             AudioSegment(
                 segment_id=f"segment_{index:04d}",
@@ -140,3 +203,79 @@ def build_segment_plan(
             )
         )
     return segments
+
+
+def extract_segment(
+    source_audio: Path,
+    output_path: Path,
+    *,
+    start_sec: float,
+    end_sec: float,
+    sample_rate: int = 16_000,
+    channels: int = 1,
+    ffmpeg_binary: str = "ffmpeg",
+) -> None:
+    if start_sec < 0 or end_sec <= start_sec:
+        raise ValueError("invalid segment time range")
+    binary = require_ffmpeg(ffmpeg_binary)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    command = [
+        binary,
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-y",
+        "-ss",
+        f"{start_sec:.6f}",
+        "-i",
+        str(source_audio),
+        "-t",
+        f"{end_sec - start_sec:.6f}",
+        "-ac",
+        str(channels),
+        "-ar",
+        str(sample_rate),
+        "-c:a",
+        "pcm_s16le",
+        str(output_path),
+    ]
+    completed = subprocess.run(command, capture_output=True, text=True, check=False)
+    if completed.returncode != 0:
+        output_path.unlink(missing_ok=True)
+        raise RuntimeError(f"ffmpeg segment extraction failed: {completed.stderr.strip()}")
+
+
+def materialize_segment_plan(
+    plan: Sequence[AudioSegment],
+    output_directory: Path,
+    *,
+    ffmpeg_binary: str = "ffmpeg",
+) -> list[AudioSegment]:
+    output_directory.mkdir(parents=True, exist_ok=True)
+    materialized: list[AudioSegment] = []
+    created_paths: list[Path] = []
+    try:
+        for segment in plan:
+            output_path = output_directory / f"{segment.segment_id}.wav"
+            extract_segment(
+                segment.audio_path,
+                output_path,
+                start_sec=segment.start_offset_sec,
+                end_sec=segment.end_offset_sec,
+                ffmpeg_binary=ffmpeg_binary,
+            )
+            created_paths.append(output_path)
+            materialized.append(
+                AudioSegment(
+                    segment_id=segment.segment_id,
+                    audio_path=output_path,
+                    start_offset_sec=segment.start_offset_sec,
+                    end_offset_sec=segment.end_offset_sec,
+                    overlap_sec=segment.overlap_sec,
+                )
+            )
+    except Exception:
+        for path in created_paths:
+            path.unlink(missing_ok=True)
+        raise
+    return materialized
