@@ -289,7 +289,25 @@ Known limitation: the existing FasterWhisper standalone binary owns model
 lifetime, so one prepared segment currently starts one binary process. This has
 not been validated with a locally installed FasterWhisper model.
 
-### 14. Tests added
+### 14. Existing WhisperCpp adapter
+
+File:
+
+- `app/core/hybrid_asr/providers/whisper_cpp.py`
+
+Completed implementation:
+
+- reuses `app.core.asr.whisper_cpp.WhisperCppASR` through the common
+  `Transcriber` protocol;
+- maps model, executable, language, cache, and word-timestamp settings;
+- converts existing millisecond timestamps into seconds;
+- explicitly reports the current WhisperCpp adapter's lack of glossary-prompt
+  and previous-context support rather than silently discarding those inputs.
+
+`whisper-cli` is installed in the local environment, but no compatible Whisper
+model file was located, so real-model validation remains outstanding.
+
+### 15. Tests added
 
 Directory:
 
@@ -328,7 +346,7 @@ The following are not implemented or not validated:
 
 1. Qwen ASR provider.
 2. Real Qwen model loading and device selection.
-3. Real FasterWhisper model loading and device validation.
+3. Real FasterWhisper and WhisperCpp model loading and device validation.
 4. Qwen Forced Aligner provider.
 5. Display-text/alignment-text reversible normalization.
 6. Real Chinese, mixed-language, sutra, and mantra alignment tests.

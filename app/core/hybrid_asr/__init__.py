@@ -13,7 +13,12 @@ from .models import (
     TranscriptSegment,
 )
 from .pipeline import SegmentPipeline, SegmentPipelineResult
-from .providers import FasterWhisperConfig, FasterWhisperTranscriber
+from .providers import (
+    FasterWhisperConfig,
+    FasterWhisperTranscriber,
+    WhisperCppConfig,
+    WhisperCppTranscriber,
+)
 from .scanner import FileSnapshot, MediaScanConfig, is_file_stable, scan_media_files
 from .segmenter import SubtitleSegmentationConfig, build_subtitle_cues
 
@@ -39,6 +44,8 @@ __all__ = [
     "Transcriber",
     "TranscriptionRequest",
     "TranscriptionResult",
+    "WhisperCppConfig",
+    "WhisperCppTranscriber",
     "build_subtitle_cues",
     "is_file_stable",
     "scan_media_files",
