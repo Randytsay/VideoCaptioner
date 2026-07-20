@@ -4,20 +4,29 @@
 
 `agent/hybrid-asr-core`
 
-The branch contains a model-agnostic foundation only. Existing VideoCaptioner GUI and production ASR paths have not been changed.
+The branch now contains a model-agnostic hybrid-ASR foundation. Existing VideoCaptioner GUI and production ASR paths have not been changed.
 
-## Implemented foundation
+## Completed in the branch
 
 - Development rules in `AGENTS.md`.
 - Shared transcription, alignment, audio-segment, and subtitle data models.
 - `Transcriber` and `ForcedAligner` protocols.
-- FFmpeg audio normalization helper and deterministic smart split planning.
+- FFmpeg/ffprobe helpers for probing duration, normalization, silence detection, split planning, and segment extraction.
+- Recursive media scanning and file-stability checks.
+- Glossary CSV loading, merge, prompt terms, deterministic corrections, review-only terms, and version hashing.
+- Deterministic subtitle segmentation with pause, punctuation, duration, line-length, and reading-speed rules.
 - Deterministic transcript quality checks.
 - SRT rendering, validation, and atomic output.
-- SQLite job, segment, usage, and review schema with basic resume operations.
-- Unit tests for SRT, quality, audio planning, fingerprinting, and resume behavior.
+- SQLite schema for media, segments, transcription attempts, alignment results, usage, and review items.
+- Segment-level status, retry, interruption recovery, attempt history, usage records, and review records.
+- Injectable single-segment processing pipeline using fake providers in tests.
+- Focused unit tests and validation notes.
 
-## Mandatory first task: validate the foundation
+## Known issue to verify or fix first
+
+When an existing source path receives a different fingerprint, `media_files.status` is reset to `pending`, but existing segment rows may still need explicit invalidation/deletion. Add a regression test and ensure changed media can never reuse stale completed segment results.
+
+## Mandatory first task: validate the complete repository
 
 Run from the repository root:
 
@@ -26,26 +35,38 @@ uv sync
 uv run pytest tests/hybrid_asr -v
 uv run ruff check app/core/hybrid_asr tests/hybrid_asr
 uv run pyright app/core/hybrid_asr
+uv run pytest
 ```
 
-Fix any compatibility, formatting, typing, or import failures. Do not weaken tests merely to make them pass. Record exact command output in `docs/hybrid-asr-validation.md`.
+Fix compatibility, formatting, typing, import, migration, and regression failures. Do not weaken tests merely to make them pass. Record exact command output in `docs/hybrid-asr-validation.md`.
 
-## Task 1: complete FFmpeg segmentation
+## Task 1: inspect and reuse existing VideoCaptioner implementations
 
-Implement actual segment extraction and silence detection in `app/core/hybrid_asr/audio.py` or dedicated modules.
+Locate and document the current repository implementations for:
+
+- Qwen ASR;
+- Whisper/faster-whisper/whisper.cpp;
+- model loading and device selection;
+- FFmpeg utilities;
+- subtitle entities and writers;
+- custom dictionaries and prompt files;
+- batch task execution and GUI threads.
+
+Do not create duplicate model-loading systems when existing code can be adapted.
+
+## Task 2: finish real FFmpeg validation
+
+Although core commands exist, validate them against installed FFmpeg/ffprobe and real media.
 
 Acceptance criteria:
 
-- Probe media duration reliably.
-- Run `silencedetect` and parse Windows/macOS/Linux output.
-- Extract each planned segment as 16 kHz mono PCM WAV.
-- Use Unicode-safe subprocess arguments.
-- Clean temporary files on success and failure.
-- Add integration tests marked `slow` that skip clearly when FFmpeg is unavailable.
+- Unicode Windows and macOS paths work.
+- Silence detection output is parsed correctly on actual FFmpeg output.
+- Extracted segments have the expected duration, sample rate, and channel count.
+- Temporary files are cleaned on success and failure.
+- Integration tests are marked `slow` and skip clearly when FFmpeg is unavailable.
 
-## Task 2: adapt existing Qwen and Whisper implementations
-
-Inspect the existing repository and reuse current model loading and transcription code. Do not create a second independent implementation if working code already exists.
+## Task 3: adapt existing Qwen and Whisper implementations
 
 Create providers implementing `Transcriber`:
 
@@ -54,52 +75,41 @@ Create providers implementing `Transcriber`:
 
 Acceptance criteria:
 
+- Reuse current model loading and transcription logic.
 - Support language, prompt/glossary, previous context, and optional word timestamps.
 - Return `TranscriptionResult` consistently.
-- Separate model loading from each request.
+- Load each model once rather than once per segment.
 - Provide mock unit tests and real local integration tests.
 - Record installed package versions, device, model path/name, media duration, elapsed time, and output sample.
 
-## Task 3: integrate Qwen forced alignment
+## Task 4: integrate Qwen forced alignment
 
 Create a provider implementing `ForcedAligner` using the installed Qwen forced-aligner model/API.
 
-Critical rule: the aligner may assign timestamps only. It must not replace, paraphrase, or correct transcript text.
+Critical rule: the aligner assigns timestamps only. It must not replace, paraphrase, or correct transcript text.
 
 Acceptance criteria:
 
 - Support Traditional Chinese and mixed English.
 - Create a reversible mapping between display text and alignment text.
-- Normalize punctuation, spaces, numbers, and English case for alignment while preserving display text.
+- Normalize punctuation, spaces, numbers, English case, and symbols while preserving display text.
 - Return token/character times, confidence when available, coverage, and unmatched text.
-- Test with a real Chinese audio clip and report coverage.
-- Explicitly document unsupported characters, sutra/mantra behavior, and package-version constraints.
+- Test with real Chinese speech, sutra reading, and the recurring mantra ending.
+- Explicitly document unsupported characters and package-version constraints.
 
-## Task 4: add glossary management
+## Task 5: complete orchestration and CLI
 
-Implement:
-
-- default glossary plus folder-specific glossary selection;
-- CSV columns `wrong_term,correct_term,note,match_mode,enabled`;
-- modes `prompt_only`, `exact`, `contains`, `regex`, and `review_only`;
-- deterministic version hash;
-- safe correction rules that avoid blind substring replacement.
-
-Reuse the repository's current custom dictionary and prompt-file functionality where possible.
-
-## Task 5: build the orchestrator and CLI
-
-Create a model-independent pipeline that coordinates:
+Build the full model-independent pipeline around the existing core:
 
 1. file scan and stability check;
 2. fingerprint and resume decision;
 3. normalization and smart segmentation;
 4. transcription;
-5. glossary normalization;
+5. glossary processing;
 6. forced alignment;
 7. quality checks;
 8. retry/fallback decision;
-9. cue segmentation;
+9. cue merge and cross-segment overlap removal;
 10. atomic SRT output;
 11. SQLite updates.
 
@@ -114,7 +124,7 @@ Add `--dry-run`, `--retry-failed`, and `--review-needed`.
 
 ## Task 6: integrate Vertex AI Gemini
 
-Use the current official Google Gen AI SDK in Vertex AI mode, not an AI Studio API key workflow.
+Use the current official Google Gen AI SDK in Vertex AI mode, not an AI Studio API-key workflow.
 
 Acceptance criteria:
 
