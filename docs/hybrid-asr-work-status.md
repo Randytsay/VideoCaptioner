@@ -235,9 +235,12 @@ Completed schema and operations:
 - review-item creation and resolution;
 - basic incremental-column migration support.
 
-Known issue requiring immediate correction:
-
-When an existing source path receives a different fingerprint, the media status is reset to `pending`, but existing completed segment rows may remain. The next agent must add a regression test and invalidate/delete all stale segment-related rows whenever the fingerprint changes. Changed media must never reuse old transcription or alignment results.
+Fingerprint invalidation is now covered by a regression test. When a source path
+receives a different fingerprint, its existing segments are deleted before the
+media record is updated; SQLite foreign-key cascading removes segment attempts,
+alignment records, per-segment usage, and review items. Changed media therefore
+cannot reuse old transcript or alignment results. Media-level usage remains as
+historical billing audit data.
 
 ### 11. Injectable segment processing pipeline
 
@@ -330,18 +333,16 @@ The following are not implemented or not validated:
 
 The next agent must proceed in this order:
 
-1. Run complete repository validation and fix lint/type/test/import failures.
-2. Fix stale SQLite segment reuse when the media fingerprint changes.
-3. Run real FFmpeg integration tests.
-4. Inspect and adapt existing Whisper implementations into `Transcriber` providers.
-5. Locate the user's installed Qwen environment and integrate Qwen without duplicating model loading.
-6. Integrate and validate Qwen Forced Aligner.
-7. Add reversible alignment-text normalization.
-8. Build whole-file orchestration and CLI with SQLite resume support.
-9. Add Vertex AI Gemini.
-10. Implement smart fallback decisions.
-11. Perform real-world validation.
-12. Add the Traditional Chinese GUI only after CLI end-to-end tests pass.
+1. Reconcile the legacy `ChunkedASR` test/API contract, then obtain a clean full-suite baseline.
+2. Inspect and adapt existing Whisper implementations into `Transcriber` providers.
+3. Locate the user's installed Qwen environment and integrate Qwen without duplicating model loading.
+4. Integrate and validate Qwen Forced Aligner.
+5. Add reversible alignment-text normalization.
+6. Build whole-file orchestration and CLI with SQLite resume support.
+7. Add Vertex AI Gemini.
+8. Implement smart fallback decisions.
+9. Perform real-world validation.
+10. Add the Traditional Chinese GUI only after CLI end-to-end tests pass.
 
 ## Do not redo or replace without evidence
 

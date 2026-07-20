@@ -8,7 +8,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Iterator
 
-
 SCHEMA_VERSION = 2
 
 
@@ -172,6 +171,12 @@ class JobRepository:
     def now() -> str:
         return datetime.now(UTC).isoformat()
 
+    @staticmethod
+    def _inserted_id(cursor: sqlite3.Cursor, record_name: str) -> int:
+        if cursor.lastrowid is None:
+            raise RuntimeError(f"SQLite did not return an ID for {record_name}")
+        return int(cursor.lastrowid)
+
     def schema_version(self) -> int:
         with self.connection() as connection:
             row = connection.execute("SELECT version FROM schema_meta LIMIT 1").fetchone()
@@ -189,6 +194,18 @@ class JobRepository:
     ) -> int:
         now = self.now()
         with self.connection() as connection:
+            existing = connection.execute(
+                "SELECT id, fingerprint FROM media_files WHERE source_path = ?",
+                (str(source_path),),
+            ).fetchone()
+            if existing is not None and existing["fingerprint"] != fingerprint.value:
+                # A changed source invalidates every segment-derived result.
+                # Cascading foreign keys remove attempts, alignments, per-segment
+                # usage, and review items; media-level usage is retained as audit
+                # history because it is not a reusable transcription result.
+                connection.execute(
+                    "DELETE FROM segments WHERE media_file_id = ?", (existing["id"],)
+                )
             connection.execute(
                 """
                 INSERT INTO media_files(
@@ -341,7 +358,7 @@ class JobRepository:
                 """,
                 (segment_id, provider, model, self.now()),
             )
-            return int(cursor.lastrowid)
+            return self._inserted_id(cursor, "transcription attempt")
 
     def finish_transcription_attempt(
         self,
@@ -389,7 +406,7 @@ class JobRepository:
                     self.now(),
                 ),
             )
-            return int(cursor.lastrowid)
+            return self._inserted_id(cursor, "alignment result")
 
     def record_usage(
         self,
@@ -423,7 +440,7 @@ class JobRepository:
                     self.now(),
                 ),
             )
-            return int(cursor.lastrowid)
+            return self._inserted_id(cursor, "usage record")
 
     def add_review_item(
         self,
@@ -442,7 +459,7 @@ class JobRepository:
                 """,
                 (media_file_id, segment_id, reason_code, details, self.now()),
             )
-            return int(cursor.lastrowid)
+            return self._inserted_id(cursor, "review item")
 
     def resolve_review_item(self, review_item_id: int) -> None:
         with self.connection() as connection:

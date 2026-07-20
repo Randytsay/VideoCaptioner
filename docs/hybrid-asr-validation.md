@@ -1,32 +1,35 @@
 # Hybrid ASR validation status
 
-## Validation performed in the assistant execution environment
+## Validation performed in the local repository checkout
 
-The GitHub repository could not be cloned because the execution container could not resolve `github.com`. Validation was therefore performed by recreating the new model-independent package and its focused tests in an isolated Python environment.
+Validation was run against the complete local checkout on macOS with Python 3.12.
 
 Validated components:
 
-- glossary CSV loading, correction, review hits, and stable version hashing;
-- deterministic subtitle segmentation and line wrapping;
-- media scan filtering and file stability rules;
-- injected transcription/alignment segment pipeline;
-- Python module compilation.
+- `uv sync --all-groups`;
+- `uv run pytest tests/hybrid_asr -v` — 24 passed;
+- `uv run ruff check app/core/hybrid_asr tests/hybrid_asr`;
+- `uv run pyright app/core/hybrid_asr`;
+- FFmpeg/ffprobe normalisation and segment materialisation using the bundled
+  Chinese audio fixture through Unicode paths.
 
 Result:
 
 ```text
-8 passed
+24 passed
 ```
 
 ## Validation not available in this environment
 
-The following commands still need to run against the complete repository checkout:
+The full existing-suite run was started. It exposed pre-existing failures in
+`tests/test_asr/test_chunking.py`: its tests call `ChunkedASR(audio_input=...)`,
+but the current constructor accepts `audio_path`. This is outside the Hybrid ASR
+core and must be separately reconciled before the whole-suite baseline can pass.
+
+The following command still needs a clean complete pass after that legacy test
+contract is resolved:
 
 ```bash
-uv sync
-uv run pytest tests/hybrid_asr -v
-uv run ruff check app/core/hybrid_asr tests/hybrid_asr
-uv run pyright app/core/hybrid_asr
 uv run pytest
 ```
 
@@ -34,7 +37,7 @@ uv run pytest
 
 ## Real integration tests still required
 
-- FFmpeg/ffprobe against real video and Unicode paths;
+- FFmpeg/ffprobe against a real video and Windows Unicode paths;
 - existing Qwen model adapter;
 - existing Whisper/faster-whisper adapter;
 - Qwen forced aligner;

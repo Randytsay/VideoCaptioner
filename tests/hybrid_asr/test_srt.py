@@ -3,7 +3,12 @@ from pathlib import Path
 import pytest
 
 from app.core.hybrid_asr.models import SubtitleCue
-from app.core.hybrid_asr.srt import format_srt_timestamp, render_srt, validate_cues, write_srt_atomic
+from app.core.hybrid_asr.srt import (
+    format_srt_timestamp,
+    render_srt,
+    validate_cues,
+    write_srt_atomic,
+)
 
 
 def test_format_srt_timestamp_rounds_milliseconds() -> None:

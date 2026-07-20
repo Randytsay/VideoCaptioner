@@ -5,8 +5,8 @@ from app.core.hybrid_asr.models import (
     AlignedToken,
     AlignmentResult,
     AudioSegment,
-    TranscriptSegment,
     TranscriptionResult,
+    TranscriptSegment,
 )
 from app.core.hybrid_asr.pipeline import SegmentPipeline
 

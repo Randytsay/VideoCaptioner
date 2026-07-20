@@ -1,6 +1,11 @@
 from pathlib import Path
 
-from app.core.hybrid_asr.audio import SilenceInterval, build_segment_plan, choose_split_points, parse_silencedetect
+from app.core.hybrid_asr.audio import (
+    SilenceInterval,
+    build_segment_plan,
+    choose_split_points,
+    parse_silencedetect,
+)
 
 
 def test_parse_silencedetect() -> None:

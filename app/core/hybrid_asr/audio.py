@@ -153,6 +153,10 @@ def choose_split_points(
     points = [0.0]
     target = target_sec
     while target < duration_sec:
+        # The remaining tail belongs to the preceding segment when it would be
+        # shorter than the configured minimum; do not create a near-empty cue.
+        if duration_sec - target < minimum_segment_sec:
+            break
         lower = max(points[-1] + minimum_segment_sec, target - search_window_sec)
         upper = min(duration_sec - minimum_segment_sec, target + search_window_sec)
         candidates = [

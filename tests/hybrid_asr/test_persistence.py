@@ -73,3 +73,30 @@ def test_processing_segment_can_be_recovered_as_interrupted(tmp_path: Path) -> N
     assert repository.recover_interrupted("9999-12-31T23:59:59+00:00") == 1
     pending = repository.pending_segments(media_id)
     assert pending[0]["status"] == "interrupted"
+
+
+def test_changed_fingerprint_invalidates_stale_segment_results(tmp_path: Path) -> None:
+    source = tmp_path / "已更新的課程.wav"
+    source.write_bytes(b"first recording")
+    repository = JobRepository(tmp_path / "jobs.db")
+    media_id = repository.upsert_media_file(source, fingerprint_file(source))
+    old_segment_id = repository.upsert_segment(media_id, "segment_0001", 0.0, 10.0)
+    repository.complete_segment(old_segment_id, "舊逐字稿", 0.99)
+    attempt_id = repository.create_transcription_attempt(old_segment_id, "test", "test-model")
+    repository.finish_transcription_attempt(attempt_id, status="done", transcript_text="舊逐字稿")
+    repository.record_alignment(
+        old_segment_id, provider="test-aligner", model="test-model", coverage=0.99
+    )
+
+    source.write_bytes(b"replaced recording with new contents")
+    same_media_id = repository.upsert_media_file(source, fingerprint_file(source))
+    new_segment_id = repository.upsert_segment(same_media_id, "segment_0001", 0.0, 10.0)
+
+    assert same_media_id == media_id
+    pending = repository.pending_segments(media_id)
+    assert [(row["id"], row["status"], row["transcript_text"]) for row in pending] == [
+        (new_segment_id, "pending", None)
+    ]
+    with repository.connection() as connection:
+        assert connection.execute("SELECT COUNT(*) FROM transcription_attempts").fetchone()[0] == 0
+        assert connection.execute("SELECT COUNT(*) FROM alignment_results").fetchone()[0] == 0

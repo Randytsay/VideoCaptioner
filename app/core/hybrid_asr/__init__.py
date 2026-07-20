@@ -8,9 +8,9 @@ from .models import (
     AlignmentResult,
     AudioSegment,
     SubtitleCue,
-    TranscriptSegment,
     TranscriptionRequest,
     TranscriptionResult,
+    TranscriptSegment,
 )
 from .pipeline import SegmentPipeline, SegmentPipelineResult
 from .scanner import FileSnapshot, MediaScanConfig, is_file_stable, scan_media_files
