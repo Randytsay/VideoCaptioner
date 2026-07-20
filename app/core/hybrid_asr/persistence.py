@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Iterator
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,6 +24,8 @@ class FileFingerprint:
 
 
 def fingerprint_file(path: Path, sample_bytes: int = 1024 * 1024) -> FileFingerprint:
+    if sample_bytes < 1:
+        raise ValueError("sample_bytes must be positive")
     stat = path.stat()
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -45,6 +47,7 @@ class JobRepository:
         connection = sqlite3.connect(self.database_path)
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA foreign_keys = ON")
+        connection.execute("PRAGMA journal_mode = WAL")
         try:
             yield connection
             connection.commit()
@@ -62,7 +65,7 @@ class JobRepository:
                     version INTEGER NOT NULL
                 );
                 INSERT INTO schema_meta(version)
-                SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM schema_meta);
+                SELECT 0 WHERE NOT EXISTS (SELECT 1 FROM schema_meta);
 
                 CREATE TABLE IF NOT EXISTS media_files (
                     id INTEGER PRIMARY KEY,
@@ -92,6 +95,29 @@ class JobRepository:
                     UNIQUE(media_file_id, segment_key)
                 );
 
+                CREATE TABLE IF NOT EXISTS transcription_attempts (
+                    id INTEGER PRIMARY KEY,
+                    segment_id INTEGER NOT NULL REFERENCES segments(id) ON DELETE CASCADE,
+                    provider TEXT NOT NULL,
+                    model TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'processing',
+                    transcript_text TEXT,
+                    error_message TEXT,
+                    started_at TEXT NOT NULL,
+                    completed_at TEXT
+                );
+
+                CREATE TABLE IF NOT EXISTS alignment_results (
+                    id INTEGER PRIMARY KEY,
+                    segment_id INTEGER NOT NULL REFERENCES segments(id) ON DELETE CASCADE,
+                    provider TEXT NOT NULL,
+                    model TEXT NOT NULL,
+                    coverage REAL NOT NULL,
+                    unmatched_text TEXT,
+                    result_json TEXT,
+                    created_at TEXT NOT NULL
+                );
+
                 CREATE TABLE IF NOT EXISTS usage_records (
                     id INTEGER PRIMARY KEY,
                     media_file_id INTEGER REFERENCES media_files(id) ON DELETE CASCADE,
@@ -101,6 +127,7 @@ class JobRepository:
                     input_units REAL,
                     output_units REAL,
                     estimated_cost_usd REAL,
+                    pricing_version TEXT,
                     created_at TEXT NOT NULL
                 );
 
@@ -111,14 +138,44 @@ class JobRepository:
                     reason_code TEXT NOT NULL,
                     details TEXT,
                     resolved INTEGER NOT NULL DEFAULT 0,
-                    created_at TEXT NOT NULL
+                    created_at TEXT NOT NULL,
+                    resolved_at TEXT
                 );
+
+                CREATE INDEX IF NOT EXISTS idx_segments_media_status
+                    ON segments(media_file_id, status);
+                CREATE INDEX IF NOT EXISTS idx_attempts_segment
+                    ON transcription_attempts(segment_id);
+                CREATE INDEX IF NOT EXISTS idx_reviews_unresolved
+                    ON review_items(resolved, media_file_id);
                 """
             )
+            self._ensure_column(connection, "usage_records", "pricing_version", "TEXT")
+            self._ensure_column(connection, "review_items", "resolved_at", "TEXT")
+            connection.execute("UPDATE schema_meta SET version = ?", (SCHEMA_VERSION,))
+
+    @staticmethod
+    def _ensure_column(
+        connection: sqlite3.Connection,
+        table: str,
+        column: str,
+        definition: str,
+    ) -> None:
+        existing = {
+            str(row["name"])
+            for row in connection.execute(f"PRAGMA table_info({table})").fetchall()
+        }
+        if column not in existing:
+            connection.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
     @staticmethod
     def now() -> str:
         return datetime.now(UTC).isoformat()
+
+    def schema_version(self) -> int:
+        with self.connection() as connection:
+            row = connection.execute("SELECT version FROM schema_meta LIMIT 1").fetchone()
+            return int(row["version"]) if row else 0
 
     def upsert_media_file(
         self,
@@ -151,12 +208,19 @@ class JobRepository:
                     END
                 """,
                 (
-                    str(source_path), fingerprint.value, provider, model,
-                    glossary_version, config_hash, now, now,
+                    str(source_path),
+                    fingerprint.value,
+                    provider,
+                    model,
+                    glossary_version,
+                    config_hash,
+                    now,
+                    now,
                 ),
             )
             row = connection.execute(
-                "SELECT id FROM media_files WHERE source_path = ?", (str(source_path),)
+                "SELECT id FROM media_files WHERE source_path = ?",
+                (str(source_path),),
             ).fetchone()
             if row is None:
                 raise RuntimeError("Failed to create media file record")
@@ -198,6 +262,16 @@ class JobRepository:
                 raise RuntimeError("Failed to create segment record")
             return int(row["id"])
 
+    def start_segment(self, segment_id: int) -> None:
+        with self.connection() as connection:
+            connection.execute(
+                """
+                UPDATE segments SET status='processing', error_message=NULL, updated_at=?
+                WHERE id=?
+                """,
+                (self.now(), segment_id),
+            )
+
     def complete_segment(
         self,
         segment_id: int,
@@ -213,7 +287,12 @@ class JobRepository:
                 (transcript_text, alignment_coverage, self.now(), segment_id),
             )
 
-    def fail_segment(self, segment_id: int, error_message: str, needs_review: bool = False) -> None:
+    def fail_segment(
+        self,
+        segment_id: int,
+        error_message: str,
+        needs_review: bool = False,
+    ) -> None:
         status = "needs_review" if needs_review else "failed"
         with self.connection() as connection:
             connection.execute(
@@ -223,6 +302,17 @@ class JobRepository:
                 """,
                 (status, error_message, self.now(), segment_id),
             )
+
+    def recover_interrupted(self, updated_before: str) -> int:
+        with self.connection() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE segments SET status='interrupted', updated_at=?
+                WHERE status='processing' AND updated_at < ?
+                """,
+                (self.now(), updated_before),
+            )
+            return int(cursor.rowcount)
 
     def pending_segments(self, media_file_id: int) -> list[sqlite3.Row]:
         with self.connection() as connection:
@@ -235,4 +325,130 @@ class JobRepository:
                     """,
                     (media_file_id,),
                 ).fetchall()
+            )
+
+    def create_transcription_attempt(
+        self,
+        segment_id: int,
+        provider: str,
+        model: str,
+    ) -> int:
+        with self.connection() as connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO transcription_attempts(segment_id, provider, model, started_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (segment_id, provider, model, self.now()),
+            )
+            return int(cursor.lastrowid)
+
+    def finish_transcription_attempt(
+        self,
+        attempt_id: int,
+        *,
+        status: str,
+        transcript_text: str | None = None,
+        error_message: str | None = None,
+    ) -> None:
+        with self.connection() as connection:
+            connection.execute(
+                """
+                UPDATE transcription_attempts
+                SET status=?, transcript_text=?, error_message=?, completed_at=?
+                WHERE id=?
+                """,
+                (status, transcript_text, error_message, self.now(), attempt_id),
+            )
+
+    def record_alignment(
+        self,
+        segment_id: int,
+        *,
+        provider: str,
+        model: str,
+        coverage: float,
+        unmatched_text: str = "",
+        result_json: str | None = None,
+    ) -> int:
+        with self.connection() as connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO alignment_results(
+                    segment_id, provider, model, coverage, unmatched_text,
+                    result_json, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    segment_id,
+                    provider,
+                    model,
+                    coverage,
+                    unmatched_text,
+                    result_json,
+                    self.now(),
+                ),
+            )
+            return int(cursor.lastrowid)
+
+    def record_usage(
+        self,
+        *,
+        provider: str,
+        model: str,
+        media_file_id: int | None = None,
+        segment_id: int | None = None,
+        input_units: float | None = None,
+        output_units: float | None = None,
+        estimated_cost_usd: float | None = None,
+        pricing_version: str | None = None,
+    ) -> int:
+        with self.connection() as connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO usage_records(
+                    media_file_id, segment_id, provider, model, input_units,
+                    output_units, estimated_cost_usd, pricing_version, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    media_file_id,
+                    segment_id,
+                    provider,
+                    model,
+                    input_units,
+                    output_units,
+                    estimated_cost_usd,
+                    pricing_version,
+                    self.now(),
+                ),
+            )
+            return int(cursor.lastrowid)
+
+    def add_review_item(
+        self,
+        media_file_id: int,
+        reason_code: str,
+        *,
+        segment_id: int | None = None,
+        details: str | None = None,
+    ) -> int:
+        with self.connection() as connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO review_items(
+                    media_file_id, segment_id, reason_code, details, created_at
+                ) VALUES (?, ?, ?, ?, ?)
+                """,
+                (media_file_id, segment_id, reason_code, details, self.now()),
+            )
+            return int(cursor.lastrowid)
+
+    def resolve_review_item(self, review_item_id: int) -> None:
+        with self.connection() as connection:
+            connection.execute(
+                """
+                UPDATE review_items SET resolved=1, resolved_at=? WHERE id=?
+                """,
+                (self.now(), review_item_id),
             )
