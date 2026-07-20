@@ -53,6 +53,12 @@ cookies.txt
 htmlcov/
 *.log
 
+# Hybrid ASR runtime state and credentials
+/data/jobs.db
+/temp_audio/
+*.srt.partial
+*.service-account.json
+
 # 项目文档
 CLAUDE.md
 
