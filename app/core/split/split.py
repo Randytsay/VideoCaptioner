@@ -1,5 +1,6 @@
 import atexit
 import difflib
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Union
 
@@ -108,6 +109,9 @@ class SubtitleSplitter:
         self.max_word_count_cjk = max_word_count_cjk
         self.max_word_count_english = max_word_count_english
         self.is_running = True
+        self._completed_segments = 0
+        self._total_segments = 0
+        self._lock = threading.Lock()
         self._init_thread_pool()
 
     def _init_thread_pool(self):
@@ -126,6 +130,7 @@ class SubtitleSplitter:
 
         Args:
             subtitle_data: 字幕文件路径或ASRData对象
+            callback: 进度回调函数(completed: int, total: int)
 
         Returns:
             分割后的ASRData对象
@@ -153,9 +158,11 @@ class SubtitleSplitter:
             logger.info(f"根据字数 {total_word_count},确定断句分段数: {num_segments}")
 
             asr_data_list = self._split_asr_data(asr_data, num_segments)
+            self._total_segments = len(asr_data_list)
+            self._completed_segments = 0
 
             # 4. 并发处理
-            processed_segments = self._process_segments(asr_data_list)
+            processed_segments = self._process_segments(asr_data_list, callback)
 
             # 5. 合并并优化
             final_segments = self._merge_processed_segments(processed_segments)
@@ -245,7 +252,7 @@ class SubtitleSplitter:
 
         return segments
 
-    def _process_segments(self, asr_data_list: List[ASRData]) -> List[List[ASRDataSeg]]:
+    def _process_segments(self, asr_data_list: List[ASRData], callback=None) -> List[List[ASRDataSeg]]:
         """并发处理所有分段"""
         futures = []
         for asr_data in asr_data_list:
@@ -261,6 +268,14 @@ class SubtitleSplitter:
             try:
                 result = future.result()
                 processed_segments.append(result)
+                with self._lock:
+                    self._completed_segments += 1
+                    logger.info(f"字幕分段處理進度: {self._completed_segments}/{self._total_segments} 已完成")
+                    if callback:
+                        try:
+                            callback(self._completed_segments, self._total_segments)
+                        except Exception:
+                            pass
             except Exception as e:
                 logger.error(f"处理分段失败:{str(e)}")
 

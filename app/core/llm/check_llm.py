@@ -44,7 +44,7 @@ def check_llm_connection(
     except openai.AuthenticationError:
         return False, "Authentication Error. Please check your API key."
     except openai.NotFoundError:
-        return False, "URL Not Found Error. Please check your Base URL."
+        return False, "URL or Model Not Found Error. Please check your Base URL and Model Name."
     except openai.OpenAIError as e:
         return False, "OpenAI Error: " + str(e)
     except Exception as e:

@@ -106,7 +106,7 @@ class WhisperCppASR(BaseASR):
 
         if self.language == "zh":
             whisper_params.extend(
-                ["--prompt", "你好，我们需要使用简体中文，以下是普通话的句子。"]
+                ["--prompt", "你好，我們需要使用繁體中文，以下是國語的句子。"]
             )
 
         return whisper_params

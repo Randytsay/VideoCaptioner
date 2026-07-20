@@ -86,7 +86,8 @@ def create_logging_http_client() -> httpx.Client:
         event_hooks={
             "request": [_on_request],
             "response": [_on_response],
-        }
+        },
+        timeout=120.0,
     )
 
 

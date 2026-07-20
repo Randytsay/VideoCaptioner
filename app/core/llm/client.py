@@ -32,8 +32,15 @@ def normalize_base_url(base_url: str) -> str:
     parsed = urlparse(url)
     path = parsed.path.rstrip("/")
 
-    if not path:
-        path = "/v1"
+    # Remove /chat/completions if the user accidentally included it
+    if path.endswith("/chat/completions"):
+        path = path[:-17] # len("/chat/completions")
+    
+    # Remove /v1 if it exists so we can add it back cleanly (prevents /v1/v1)
+    if path.endswith("/v1"):
+        path = path[:-3] # len("/v1")
+        
+    path = path + "/v1"
 
     normalized = urlunparse(
         (
@@ -69,6 +76,7 @@ def get_llm_client() -> OpenAI:
                     base_url=base_url,
                     api_key=api_key,
                     http_client=create_logging_http_client(),
+                    timeout=120.0,
                 )
 
     return _global_client
@@ -99,6 +107,7 @@ def _call_llm_api(
         model=model,
         messages=messages,  # pyright: ignore[reportArgumentType]
         temperature=temperature,
+        timeout=120.0,
         **kwargs,
     )
 

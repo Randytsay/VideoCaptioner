@@ -90,7 +90,7 @@ class WhisperAPI(BaseASR):
         """Submit audio for transcription."""
         try:
             if self.language == "zh" and not self.prompt:
-                self.prompt = "你好，我们需要使用简体中文，以下是普通话的句子"
+                self.prompt = "你好，我們需要使用繁體中文，以下是國語的句子"
 
             if not self.base_url:
                 raise ValueError("Whisper BASE_URL must be set")
