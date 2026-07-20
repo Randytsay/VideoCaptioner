@@ -271,7 +271,25 @@ File:
 
 Exports the completed core models, protocols, glossary types, scanner types, segment pipeline, and subtitle segmenter.
 
-### 13. Tests added
+### 13. Existing FasterWhisper adapter
+
+File:
+
+- `app/core/hybrid_asr/providers/faster_whisper.py`
+
+Completed implementation:
+
+- reuses the existing `app.core.asr.faster_whisper.FasterWhisperASR` contract;
+- maps Hybrid ASR transcription requests, glossary terms, context, language,
+  device, VAD, and word-timestamp settings into the existing adapter;
+- converts existing millisecond timestamps into provider-neutral seconds;
+- uses dependency injection for model-free tests.
+
+Known limitation: the existing FasterWhisper standalone binary owns model
+lifetime, so one prepared segment currently starts one binary process. This has
+not been validated with a locally installed FasterWhisper model.
+
+### 14. Tests added
 
 Directory:
 
@@ -310,7 +328,7 @@ The following are not implemented or not validated:
 
 1. Qwen ASR provider.
 2. Real Qwen model loading and device selection.
-3. Whisper provider adapting the existing repository Whisper implementations.
+3. Real FasterWhisper model loading and device validation.
 4. Qwen Forced Aligner provider.
 5. Display-text/alignment-text reversible normalization.
 6. Real Chinese, mixed-language, sutra, and mantra alignment tests.
@@ -334,7 +352,7 @@ The following are not implemented or not validated:
 The next agent must proceed in this order:
 
 1. Reconcile the legacy `ChunkedASR` test/API contract, then obtain a clean full-suite baseline.
-2. Inspect and adapt existing Whisper implementations into `Transcriber` providers.
+2. Validate the FasterWhisper adapter with an installed local model.
 3. Locate the user's installed Qwen environment and integrate Qwen without duplicating model loading.
 4. Integrate and validate Qwen Forced Aligner.
 5. Add reversible alignment-text normalization.

@@ -13,6 +13,7 @@ from .models import (
     TranscriptSegment,
 )
 from .pipeline import SegmentPipeline, SegmentPipelineResult
+from .providers import FasterWhisperConfig, FasterWhisperTranscriber
 from .scanner import FileSnapshot, MediaScanConfig, is_file_stable, scan_media_files
 from .segmenter import SubtitleSegmentationConfig, build_subtitle_cues
 
@@ -22,6 +23,8 @@ __all__ = [
     "AlignmentResult",
     "AudioSegment",
     "FileSnapshot",
+    "FasterWhisperConfig",
+    "FasterWhisperTranscriber",
     "ForcedAligner",
     "Glossary",
     "GlossaryApplyResult",
