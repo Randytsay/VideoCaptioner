@@ -12,26 +12,55 @@ jobs:
       pull-requests: write
       issues: write
 
+    env:
+      REVIEW_PROMPT: |
+        Review this pull request and provide constructive, actionable feedback on:
+        - Code quality and Python best practices
+        - Potential correctness bugs and edge cases
+        - Performance and resource-management concerns
+        - Security and credential-handling risks
+        - Test coverage and missing regression tests
+        - Windows, macOS, Unicode-path, and Traditional Chinese compatibility
+
+        Distinguish verified defects from suggestions. Do not claim that model-dependent
+        integrations work unless the pull request includes real integration-test evidence.
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
-      - name: Run Claude Code Review
-        id: claude-review
+      - name: Detect Claude credential
+        id: claude-auth
+        shell: bash
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [[ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]]; then
+            echo "method=oauth" >> "$GITHUB_OUTPUT"
+            echo "Using CLAUDE_CODE_OAUTH_TOKEN."
+          elif [[ -n "$ANTHROPIC_API_KEY" ]]; then
+            echo "method=api-key" >> "$GITHUB_OUTPUT"
+            echo "Using ANTHROPIC_API_KEY."
+          else
+            echo "::error title=Missing Claude credential::Add CLAUDE_CODE_OAUTH_TOKEN or ANTHROPIC_API_KEY under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Run Claude Code Review with OAuth
+        if: steps.claude-auth.outputs.method == 'oauth'
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          prompt: |
-            Review this pull request and provide constructive, actionable feedback on:
-            - Code quality and Python best practices
-            - Potential correctness bugs and edge cases
-            - Performance and resource-management concerns
-            - Security and credential-handling risks
-            - Test coverage and missing regression tests
-            - Windows, macOS, Unicode-path, and Traditional Chinese compatibility
+          prompt: ${{ env.REVIEW_PROMPT }}
 
-            Distinguish verified defects from suggestions. Do not claim that model-dependent
-            integrations work unless the pull request includes real integration-test evidence.
+      - name: Run Claude Code Review with API key
+        if: steps.claude-auth.outputs.method == 'api-key'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: ${{ env.REVIEW_PROMPT }}
