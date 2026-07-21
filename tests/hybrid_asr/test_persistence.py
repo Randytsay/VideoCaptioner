@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from app.core.hybrid_asr.models import TranscriptionResult, TranscriptSegment, UsageMetrics
 from app.core.hybrid_asr.persistence import SCHEMA_VERSION, JobRepository, fingerprint_file
 
 
@@ -60,6 +61,64 @@ def test_repository_records_attempt_alignment_usage_and_review(tmp_path: Path) -
         segment_id=segment_id,
     )
     repository.resolve_review_item(review_id)
+
+    summary = repository.usage_summary(media_id)
+    assert summary.records == 1
+    assert summary.estimated_cost_usd == 0.01
+
+
+def test_usage_summary_totals_reported_tokens(tmp_path: Path) -> None:
+    source = tmp_path / "課程.wav"
+    source.write_bytes(b"audio")
+    repository = JobRepository(tmp_path / "jobs.db")
+    media_id = repository.upsert_media_file(source, fingerprint_file(source))
+    repository.record_usage(
+        media_file_id=media_id,
+        provider="gemini_vertex",
+        model="gemini-2.5-flash",
+        input_units=1_200,
+        output_units=100,
+        estimated_cost_usd=0.002,
+        pricing_version="test-price",
+    )
+    repository.record_usage(
+        media_file_id=media_id,
+        provider="gemini_vertex",
+        model="gemini-2.5-flash",
+        input_units=800,
+        output_units=50,
+        estimated_cost_usd=0.001,
+        pricing_version="test-price",
+    )
+
+    summary = repository.usage_summary(media_id)
+    assert summary.records == 2
+    assert summary.input_tokens == 2_000
+    assert summary.output_tokens == 150
+    assert summary.estimated_cost_usd == 0.003
+
+
+def test_repository_records_provider_reported_transcription_usage(tmp_path: Path) -> None:
+    repository = JobRepository(tmp_path / "jobs.db")
+    recorded = repository.record_transcription_usage(
+        TranscriptionResult(
+            text="逐字稿",
+            segments=(TranscriptSegment("逐字稿"),),
+            provider="gemini_vertex",
+            model="gemini-2.5-flash",
+            usage=UsageMetrics(input_tokens=1_000, output_tokens=200),
+            raw_metadata={
+                "estimated_cost_usd": 0.0015,
+                "pricing_version": "test-price",
+            },
+        )
+    )
+
+    assert recorded is not None
+    summary = repository.usage_summary()
+    assert summary.input_tokens == 1_000
+    assert summary.output_tokens == 200
+    assert summary.estimated_cost_usd == 0.0015
 
 
 def test_processing_segment_can_be_recovered_as_interrupted(tmp_path: Path) -> None:

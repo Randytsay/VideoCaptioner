@@ -8,7 +8,23 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Iterator
 
+from .models import TranscriptionResult
+
 SCHEMA_VERSION = 2
+
+
+@dataclass(frozen=True, slots=True)
+class UsageSummary:
+    """Aggregated provider-reported tokens and local cost estimates.
+
+    ``estimated_cost_usd`` is not the final Google invoice and does not subtract
+    promotional credits; use Cloud Billing for those authoritative figures.
+    """
+
+    records: int
+    input_tokens: float
+    output_tokens: float
+    estimated_cost_usd: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -441,6 +457,61 @@ class JobRepository:
                 ),
             )
             return self._inserted_id(cursor, "usage record")
+
+    def record_transcription_usage(
+        self,
+        transcription: TranscriptionResult,
+        *,
+        media_file_id: int | None = None,
+        segment_id: int | None = None,
+    ) -> int | None:
+        """Persist Gemini/provider usage returned by a successful request.
+
+        This intentionally records reported tokens and the local estimate only.
+        Promotional-credit offsets and final charges belong to Cloud Billing.
+        """
+
+        if transcription.usage is None:
+            return None
+        raw_cost = transcription.raw_metadata.get("estimated_cost_usd")
+        estimated_cost = float(raw_cost) if raw_cost is not None else None
+        raw_version = transcription.raw_metadata.get("pricing_version")
+        return self.record_usage(
+            media_file_id=media_file_id,
+            segment_id=segment_id,
+            provider=transcription.provider,
+            model=transcription.model,
+            input_units=transcription.usage.input_tokens,
+            output_units=(transcription.usage.output_tokens or 0)
+            + (transcription.usage.reasoning_tokens or 0),
+            estimated_cost_usd=estimated_cost,
+            pricing_version=str(raw_version) if raw_version is not None else None,
+        )
+
+    def usage_summary(self, media_file_id: int | None = None) -> UsageSummary:
+        """Return one-job or all-job estimated Gemini/provider usage totals."""
+
+        query = """
+            SELECT COUNT(*) AS records,
+                   COALESCE(SUM(input_units), 0) AS input_tokens,
+                   COALESCE(SUM(output_units), 0) AS output_tokens,
+                   COALESCE(SUM(estimated_cost_usd), 0) AS estimated_cost_usd
+            FROM usage_records
+        """
+        parameters: tuple[object, ...] = ()
+        if media_file_id is not None:
+            query += " WHERE media_file_id = ?"
+            parameters = (media_file_id,)
+        with self.connection() as connection:
+            row = connection.execute(query, parameters).fetchone()
+            if row is None:
+                return UsageSummary(0, 0.0, 0.0, 0.0)
+            return UsageSummary(
+                records=int(row["records"]),
+                input_tokens=float(row["input_tokens"]),
+                output_tokens=float(row["output_tokens"]),
+                estimated_cost_usd=float(row["estimated_cost_usd"]),
+            )
 
     def add_review_item(
         self,

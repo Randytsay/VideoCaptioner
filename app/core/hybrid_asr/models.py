@@ -6,6 +6,31 @@ from typing import Any, Mapping, Sequence
 
 
 @dataclass(frozen=True, slots=True)
+class UsageMetrics:
+    """Provider-reported token usage for one transcription request.
+
+    These figures are not an invoice. They are the usage values returned by the
+    provider and can be used with a versioned price table for an estimate.
+    """
+
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    reasoning_tokens: int | None = None
+    cached_input_tokens: int | None = None
+
+    def __post_init__(self) -> None:
+        for name in (
+            "input_tokens",
+            "output_tokens",
+            "reasoning_tokens",
+            "cached_input_tokens",
+        ):
+            value = getattr(self, name)
+            if value is not None and value < 0:
+                raise ValueError(f"{name} must be non-negative")
+
+
+@dataclass(frozen=True, slots=True)
 class AudioSegment:
     segment_id: str
     audio_path: Path
@@ -58,6 +83,7 @@ class TranscriptionResult:
     model: str
     language: str | None = None
     warnings: Sequence[str] = ()
+    usage: UsageMetrics | None = None
     raw_metadata: Mapping[str, Any] = field(default_factory=dict)
 
 

@@ -12,6 +12,28 @@ This document is the authoritative summary of work completed on the Hybrid ASR i
 
 The current branch intentionally isolates the new Hybrid ASR foundation from the existing production GUI and transcription paths. Existing VideoCaptioner behavior has not been switched over to the new pipeline.
 
+## Vertex AI Gemini and cost-recording foundation
+
+The branch now includes an optional `GeminiVertexTranscriber` provider. It uses
+the Google Gen AI SDK in Vertex AI mode with Application Default Credentials,
+returns provider-reported token usage, and estimates USD cost from a versioned
+local price table. `JobRepository` can persist and summarize token/cost records
+per media job. The new provider is unit-tested with an injected fake client;
+it has **not** been tested against a real Vertex AI project, ADC identity, or
+the user's promotional credits. See `docs/hybrid-asr-vertex-costs.md`.
+
+Validation on 2026-07-21:
+
+- `uv run pytest tests/hybrid_asr -v`: **32 passed**.
+- `uv run ruff check app/core/hybrid_asr tests/hybrid_asr`: passed.
+- `uv run pyright app/core/hybrid_asr`: 0 errors, 0 warnings.
+- `uv run pytest -q`: **264 passed, 19 skipped, 26 failed, 9 errors**. The
+  failures are pre-existing/non-Hybrid areas: legacy `ChunkedASR` constructor
+  expectations, subtitle split callback handling, translation test fixtures,
+  and TTS cache/duration fixtures. They were not changed in this focused
+  commit. External-provider tests remain skipped because no credentials are
+  supplied to the test run.
+
 ## Repository areas reviewed
 
 The following existing implementation areas were re-read before this handoff was prepared:

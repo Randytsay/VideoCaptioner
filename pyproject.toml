@@ -38,6 +38,9 @@ dependencies = [
     "opencc>=1.2.0",
 ]
 
+[project.optional-dependencies]
+vertex = ["google-genai>=1.0.0"]
+
 [project.urls]
 Homepage = "https://github.com/WEIFENG2333/VideoCaptioner"
 Repository = "https://github.com/WEIFENG2333/VideoCaptioner"
